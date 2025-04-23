@@ -1,7 +1,7 @@
 #ifndef SEMAPHORE_H
 #define SEMAPHORE_H
 
-#include "os.h"
+#include "include/os.h"
 
 // Max procs waiting on a resource
 #define MAX_BLOCKED_Q  10

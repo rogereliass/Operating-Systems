@@ -1,7 +1,7 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
-#include "os.h"
+#include "include/os.h"
 
 // Choose algorithm
 typedef enum { S_FCFS, S_RR, S_MLFQ } sched_algo_t;

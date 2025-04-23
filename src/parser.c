@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "parser.h"
-
+#include "Operating-Systems/include/parser.h" 
 int parse_program(const char *path, instruction_t **out_code) {
     FILE *f = fopen(path, "r");
     if (!f) return -1;
@@ -50,7 +49,7 @@ void print_instruction(const instruction_t *inst) {
 }
 
 int main() {
-    const char *filename = "program.txt";  // Path to the program file
+    const char *filename = "Program_1.txt";  // Path to the program file
     instruction_t *code = NULL;
 
     int n_instructions = parse_program(filename, &code);
