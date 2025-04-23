@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "Operating-Systems/include/parser.h" 
+#include "../include/parser.h" 
 int parse_program(const char *path, instruction_t **out_code) {
     FILE *f = fopen(path, "r");
     if (!f) return -1;
@@ -23,7 +23,7 @@ int parse_program(const char *path, instruction_t **out_code) {
         // ... handle all cases ...
         // then read args: arg1 = strtok(NULL), arg2 = strtok(NULL)
         char *a1 = strtok(NULL, " \n");
-        char *a2 = strtok(NULL, " \n");
+        char *a2 = strtok(NULL, "\n");
         if (a1) strncpy(inst.arg1, a1, sizeof inst.arg1-1);
         if (a2) strncpy(inst.arg2, a2, sizeof inst.arg2-1);
         code[count++] = inst;
@@ -49,7 +49,7 @@ void print_instruction(const instruction_t *inst) {
 }
 
 int main() {
-    const char *filename = "Program_1.txt";  // Path to the program file
+    const char *filename = "../programs/Program_1.txt";  // Path to the program file
     instruction_t *code = NULL;
 
     int n_instructions = parse_program(filename, &code);

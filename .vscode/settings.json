@@ -1,6 +1,10 @@
 {
     "C_Cpp.errorSquiggles": "disabled",
     "files.associations": {
-        "os.h": "c"
+        "os.h": "c",
+        "memory.h": "c",
+        "parser.h": "c",
+        "scheduler.h": "c",
+        "semaphore.h": "c"
     }
 }

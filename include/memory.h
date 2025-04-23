@@ -1,7 +1,7 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include "include/os.h"
+#include "os.h"
 
 // Each “word” maps a name → value string
 typedef struct {

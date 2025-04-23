@@ -1,15 +1,16 @@
 #ifndef SEMAPHORE_H
 #define SEMAPHORE_H
 
-#include "include/os.h"
-
+#include "os.h"
+#include "priority_queue.h"
 // Max procs waiting on a resource
 #define MAX_BLOCKED_Q  10
 
 typedef struct {
+    char name[16];
     int value;             // 0 = locked, 1 = free
-    int queue[MAX_BLOCKED_Q];
-    int head, tail;
+    Node* queue = NULL;
+    int queue_size;
 } semaphore_t;
 
 // One global instance per resource

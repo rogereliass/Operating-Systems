@@ -1,8 +1,8 @@
-#include "os.h"
-#include "memory.h"
-#include "parser.h"
-#include "scheduler.h"
-#include "semaphore.h"
+#include "../include/os.h"
+#include "../include/memory.h"
+#include "../include/parser.h"
+#include "../include/scheduler.h"
+#include "../include/semaphore.h"
 
 int main(int argc, char **argv) {
     // 1) Init
