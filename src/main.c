@@ -12,13 +12,13 @@ int main(int argc, char **argv) {
 
     // 2) Load programs (hard‐coded or via argv)
     instruction_t *code1;
-    int n1 = parse_program("programs/prog1.txt", &code1);
+    int n1 = parse_program("programs/Program_1.txt", &code1);
 
     instruction_t *code2;
-    int n2 = parse_program("programs/prog2.txt", &code2);
+    int n2 = parse_program("programs/Program_2.txt", &code2);
 
     instruction_t *code3;
-    int n3 = parse_program("programs/prog3.txt", &code3);
+    int n3 = parse_program("programs/Program_3.txt", &code3);
 
     // 3) Create PCBs, alloc memory, enqueue
     pcb_t procs[3];

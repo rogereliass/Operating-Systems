@@ -33,3 +33,40 @@ int parse_program(const char *path, instruction_t **out_code) {
     *out_code = code;
     return count;
 }
+void print_instruction(const instruction_t *inst) {
+    const char *type_str;
+    switch (inst->type) {
+        case INST_ASSIGN:         type_str = "assign"; break;
+        case INST_PRINT:          type_str = "print"; break;
+        case INST_WRITE_FILE:     type_str = "writeFile"; break;
+        case INST_READ_FILE:      type_str = "readFile"; break;
+        case INST_PRINT_FROM_TO:  type_str = "printFromTo"; break;
+        case INST_SEM_WAIT:       type_str = "semWait"; break;
+        case INST_SEM_SIGNAL:     type_str = "semSignal"; break;
+        default:                  type_str = "unknown"; break;
+    }
+    printf("Instruction: %-14s Arg1: %-10s Arg2: %-10s\n",
+           type_str, inst->arg1, inst->arg2);
+}
+
+int main() {
+    const char *filename = "program.txt";  // Path to the program file
+    instruction_t *code = NULL;
+
+    int n_instructions = parse_program(filename, &code);
+
+    if (n_instructions < 0) {
+        printf("Failed to open or parse the file: %s\n", filename);
+        return 1;
+    }
+
+    printf("Parsed %d instruction(s):\n", n_instructions);
+    for (int i = 0; i < n_instructions; i++) {
+        print_instruction(&code[i]);
+    }
+
+    // Free the dynamically allocated memory
+    free(code);
+
+    return 0;
+}
