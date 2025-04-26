@@ -28,6 +28,11 @@ static void destroy_fcfs(Scheduler *self) {
     free(self->data);
     free(self);
 }
+pcb_t* dequeue_fcfs(Scheduler* sched) {
+    fcfs_data_t* data = (fcfs_data_t*) sched->data;
+    if (data->front == data->rear) return NULL;
+    return data->queue[data->front++]; 
+}
 
 Scheduler* create_fcfs_scheduler() {
     Scheduler *s = malloc(sizeof(Scheduler));
@@ -35,7 +40,7 @@ Scheduler* create_fcfs_scheduler() {
     s->next = next_fcfs;
     s->preempt = preempt_fcfs;
     s->destroy = destroy_fcfs;
-
+    s->dequeue = dequeue_fcfs;  
     s->data = calloc(1, sizeof(fcfs_data_t));
     return s;
 }

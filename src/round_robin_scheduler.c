@@ -50,6 +50,12 @@ static void destroy_rr(Scheduler *self) {
     free(self);
 }
 
+pcb_t* dequeue_rr(Scheduler* sched) {
+    rr_data_t* data = (rr_data_t*) sched->data;
+    if (data->head == data->tail) return NULL;
+    return data->queue[data->head++];
+}
+
 Scheduler* create_rr_scheduler(int quantum) {
     Scheduler *s = malloc(sizeof(Scheduler));
     rr_data_t *rr = calloc(1, sizeof(rr_data_t));
@@ -61,6 +67,7 @@ Scheduler* create_rr_scheduler(int quantum) {
     s->next    = next_rr;
     s->preempt = preempt_rr;
     s->destroy = destroy_rr;
+    s->dequeue = dequeue_rr;
     s->data    = rr;
 
     return s;

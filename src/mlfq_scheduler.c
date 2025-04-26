@@ -62,6 +62,16 @@ void mlfq_destroy(Scheduler* sched) {
     free(sched);
 }
 
+pcb_t* dequeue_mlfq(Scheduler* sched) {
+    mlfq_data_t* data = (mlfq_data_t*) sched->data;
+    for (int i = 0; i < NUM_QUEUES; ++i) {
+        if (!queue_empty(&data->queues[i])) {
+            return queue_pop(&data->queues[i]);
+        }
+    }
+    return NULL;
+}
+
 Scheduler* create_mlfq_scheduler() {
     Scheduler* sched = (Scheduler*)malloc(sizeof(Scheduler));
     mlfq_data_t* data = (mlfq_data_t*)malloc(sizeof(mlfq_data_t));
@@ -75,6 +85,7 @@ Scheduler* create_mlfq_scheduler() {
     sched->next = mlfq_next;
     sched->preempt = mlfq_preempt;
     sched->destroy = mlfq_destroy;
+    sched->dequeue = dequeue_mlfq;
     sched->data = data;
 
     return sched;

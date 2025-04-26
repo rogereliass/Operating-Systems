@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "../include/semaphore.h"
+#include "../include/scheduler_interface.h"
 
 #define MAX_SEMAPHORES 3
 
@@ -25,25 +26,28 @@ semaphore_t* get_semaphore(char *name) {
     return NULL; // Error: too many semaphores
 }
 
-void sem_wait(char *name,pcb_t* pcb ) {
+void sem_wait(char *name,pcb_t* pcb, Scheduler* scheduler ) {
     semaphore_t *sem = get_semaphore(name);
     if (sem->value > 0) {
         sem->value--;
     } else {
         // Move PCB to BLOCKED queue here
         pcb->state = BLOCKED;
+        
         enqueue(sem->queue,pcb);
+        Scheduler->dequeue(scheduler);
         
     }
 }
 
-void sem_signal(char *name) {
+void sem_signal(char *name,Scheduler* scheduler) {
     semaphore_t *sem = get_semaphore(name);
     if (sem->queue_size > 0) {
         pcb_t pcb = dequeue(sem->queue);
         sem->queue_size--;
         // Move PCB to READY queue here
-        pcb->state = READY; 
+        pcb->state = READY;
+        Scheduler->enqueue(scheduler);
     } else {
         sem->value++;
     }

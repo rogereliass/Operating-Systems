@@ -10,6 +10,7 @@ struct Scheduler {
     pcb_t* (*next)(Scheduler *self);
     void (*preempt)(Scheduler *self, pcb_t *proc);
     void (*destroy)(Scheduler *self);  // cleanup if needed
+    pcb_t* (*dequeue)(Scheduler *self);
 
     // scheduler-specific data
     void *data;

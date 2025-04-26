@@ -1,5 +1,7 @@
 #include "../include/os.h"
 #include "../include/memory.h"
+#include "../include/semaphore.h"
+#include "../include/scheduler_interface.h"
 
 void exec_print(pcb_t *proc, instruction_t *inst){
     printf("%s",inst->arg1);
@@ -65,30 +67,11 @@ void exec_write_file(pcb_t *proc, instruction_t *inst) {
     fclose(file);
 }
 
-char * exec_read_file(pcb_t *proc, instruction_t *inst) {
+void * exec_read_file(pcb_t *proc, instruction_t *inst) {
     FILE *file = fopen(inst->arg1, "r");
     if (!file) {
         printf("Error: could not open file %s\n", inst->arg1);
-        return NULL;
     }
-    // Read content into memory, or process it accordingly.
-    fseek(file, 0, SEEK_END);
-    long size = ftell(file);
-    rewind(file);  // Go back to the start
-
-    // Allocate buffer (+1 for null terminator)
-    char *buffer = malloc(size + 1);
-    if (!buffer) {
-        fclose(file);
-        return NULL;
-    }
-
-    // Read the file content into buffer
-    fread(buffer, 1, size, file);
-    buffer[size] = '\0';  // Null-terminate the string
-
-    fclose(file);
-    return buffer;
 }
 void exec_print_from_to(pcb_t *proc, instruction_t *inst){
     const char *val1 = mem_read(proc->mem_low, proc->mem_high, inst->arg1);
@@ -107,4 +90,12 @@ void exec_print_from_to(pcb_t *proc, instruction_t *inst){
         }
     }
     printf("\n");
+}
+void exec_semWait(pcb_t *proc, instruction_t *inst, Scheduler* scheduler){
+    char* name = inst->arg1;
+    sem_wait(name,proc,scheduler);
+}
+void exec_semSignal(instruction_t *inst, Scheduler* scheduler){
+    char* name = inst->arg1;
+    sem_wait(name,scheduler);
 }
