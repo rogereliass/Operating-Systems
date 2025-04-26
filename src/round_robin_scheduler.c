@@ -50,11 +50,20 @@ static void destroy_rr(Scheduler *self) {
     free(self);
 }
 
-pcb_t* dequeue_rr(Scheduler* sched) {
-    rr_data_t* data = (rr_data_t*) sched->data;
-    if (data->head == data->tail) return NULL;
-    return data->queue[data->head++];
+pcb_t* dequeue_rr(Scheduler* sched, pcb_t* proc) {
+    rr_data_t* rr = (rr_data_t*) sched->data;
+    int new_tail = rr->head;
+
+    for (int i = rr->head; i < rr->tail; i++) {
+        if (rr->queue[i] != proc) {
+            rr->queue[new_tail++] = rr->queue[i];
+        }
+    }
+
+    rr->tail = new_tail;
+    return proc;
 }
+
 
 Scheduler* create_rr_scheduler(int quantum) {
     Scheduler *s = malloc(sizeof(Scheduler));
