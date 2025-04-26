@@ -84,6 +84,7 @@ static void mlfq_preempt(Scheduler* sched, pcb_t* proc) {
         if (proc->priority < NUM_QUEUES - 1) {
             proc->priority++;
         }
+        proc->state = READY;
         queue_push(&data->levels[proc->priority], proc);
         q->current = NULL;
         q->ticks_used = 0;

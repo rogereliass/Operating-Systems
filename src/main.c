@@ -8,6 +8,7 @@
 #include "../include/mlfq_scheduler.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 // Global Variables
 Scheduler* scheduler = NULL;
@@ -130,9 +131,12 @@ void simulation_step() {
     current->pc++;
 
     // Check if process finished
-    if (current->pc >= current->num_instructions) {
-        current->state = TERMINATED;
+    if ( current->state == BLOCKED) {
+        return;
         // memory free if needed
+    }
+    else if (current->pc >= current->num_instructions){
+        current->state = TERMINATED;
     }
     else {
         scheduler->preempt(scheduler, current); // If not terminated or blocked
@@ -141,30 +145,62 @@ void simulation_step() {
 
 
 int main() {
-    // Init subsystems
+    // Initialize subsystems
     mem_init();
     sem_init_all();
 
+    choose_scheduler();   // Choose FCFS / RR / MLFQ
     load_programs();      // Load programs into PCBs and memory
-    choose_scheduler();   // Choose FCFS / RR / MLFQ based on user input
 
-    // GUI Loop (pseudo)
-    while (1) {
-        update_gui(); // Refresh GUI dashboard, memory map, queues
+    bool exit_program = false; // new flag to control when to leave the loop
 
+    while (!exit_program) {
+        // 1. Refresh GUI
+        update_gui(); 
+
+        // 2. Check Simulation State
         if (simulation_running) {
-            simulation_step();
-            if (!auto_mode) simulation_running = 0; // if step mode, stop after one step
+            simulation_step(); // one clock tick
+            if (!auto_mode) simulation_running = false; // in step mode, stop after one step
         }
 
-        // Handle user GUI input:
-        // - Start button → simulation_running = 1, auto_mode = 1
-        // - Step button → simulation_running = 1, auto_mode = 0
-        // - Stop button → simulation_running = 0
-        // - Reset button → restart whole program (reload everything)
+        // 3. Handle User Input
+        int user_action = get_user_action(); // hypothetical function: returns Start/Step/Stop/Reset/Exit
+
+        switch (user_action) {
+            case ACTION_START:
+                simulation_running = true;
+                auto_mode = true;
+                break;
+
+            case ACTION_STEP:
+                simulation_running = true;
+                auto_mode = false;
+                break;
+
+            case ACTION_STOP:
+                simulation_running = false;
+                break;
+
+            case ACTION_RESET:
+                // Cleanup and Reload Everything
+                scheduler->destroy(scheduler);
+                mem_init();
+                sem_init_all();
+                choose_scheduler();
+                load_programs();
+                clock_tick = 0;
+                simulation_running = false;
+                auto_mode = false;
+                break;
+
+            case ACTION_EXIT:
+                // Cleanup and Exit Program
+                scheduler->destroy(scheduler);
+                exit_program = true;
+                break;
+        }
     }
 
-    // Cleanup
-    scheduler->destroy(scheduler);
     return 0;
 }

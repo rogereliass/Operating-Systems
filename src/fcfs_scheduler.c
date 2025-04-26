@@ -21,7 +21,6 @@ static pcb_t* next_fcfs(Scheduler *self) {
 }
 
 static void preempt_fcfs(Scheduler *self, pcb_t *proc) {
-    enqueue_fcfs(self, proc); // FCFS doesn't really preempt, but for safety
 }
 
 static void destroy_fcfs(Scheduler *self) {
