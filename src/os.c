@@ -8,9 +8,9 @@ void exec_print(pcb_t *proc, instruction_t *inst){
 }
 
 void exec_assign(pcb_t *proc, instruction_t *inst){
+    char value_buffer[100];
     if (strcmp(inst->arg2, "input") == 0) {
         // Case 1: Input from user
-        char value_buffer[100];
         printf("Please enter a value: ");
         fgets(value_buffer, sizeof value_buffer, stdin);
         value_buffer[strcspn(value_buffer, "\n")] = '\0';  // remove newline
@@ -68,7 +68,7 @@ void exec_write_file(pcb_t *proc, instruction_t *inst) {
     fclose(file);
 }
 
-void * exec_read_file(pcb_t *proc, instruction_t *inst) {
+void exec_read_file(pcb_t *proc, instruction_t *inst) {
     FILE *file = fopen(inst->arg1, "r");
     if (!file) {
         printf("Error: could not open file %s\n", inst->arg1);
@@ -98,5 +98,5 @@ void exec_semWait(pcb_t *proc, instruction_t *inst, Scheduler* scheduler){
 }
 void exec_semSignal(instruction_t *inst, Scheduler* scheduler){
     char* name = inst->arg1;
-    sem_wait(name,scheduler);
+    sem_signal(name,scheduler);
 }
