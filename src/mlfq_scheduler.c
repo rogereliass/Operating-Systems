@@ -99,12 +99,11 @@ static void mlfq_destroy(Scheduler* sched) {
     free(sched);
 }
 
-static pcb_t* dequeue_mlfq(Scheduler* sched, pcb_t* proc) {
+static void dequeue_mlfq(Scheduler* sched, pcb_t* proc) {
     mlfq_data_t* data = (mlfq_data_t*) sched->data;
     for (int i = 0; i < NUM_QUEUES; ++i) {
         queue_remove(&data->levels[i], proc);
     }
-    return proc;
 }
 
 Scheduler* create_mlfq_scheduler() {

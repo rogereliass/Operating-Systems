@@ -51,7 +51,7 @@ static void destroy_rr(Scheduler *self) {
     free(self);
 }
 
-pcb_t* dequeue_rr(Scheduler* sched, pcb_t* proc) {
+static void dequeue_rr(Scheduler* sched, pcb_t* proc) {
     rr_data_t* rr = (rr_data_t*) sched->data;
     int new_tail = rr->head;
 
@@ -62,7 +62,6 @@ pcb_t* dequeue_rr(Scheduler* sched, pcb_t* proc) {
     }
 
     rr->tail = new_tail;
-    return proc;
 }
 
 
