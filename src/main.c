@@ -6,13 +6,20 @@
 #include "../include/fcfs_scheduler.h"
 #include "../include/round_robin_scheduler.h"
 #include "../include/mlfq_scheduler.h"
+#include "memory.c"
+#include "os.c"
+#include "parser.c"
+#include "semaphore.c"
+#include "fcfs_scheduler.c"
+#include "round_robin_scheduler.c"
+#include "mlfq_scheduler.c"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
 // Global Variables
 Scheduler* scheduler = NULL;
-pcb_t processes[MAX_PROCESSES];
+pcb_t processes[3];
 int num_processes = 0;
 int clock_tick = 0;
 int simulation_running = 0; // 0 = stopped, 1 = running
@@ -94,10 +101,9 @@ void load_programs() {
         processes[i].pid = i + 1;
         processes[i].state = READY;
         processes[i].priority = 0; // MLFQ start at top level
-        processes[i].pc = 0;
+        processes[i].pc = code_mem_start;
         processes[i].mem_low = var_start;
         processes[i].mem_high = current_idx - 1;
-        processes[i].num_instructions = instruction_count;
 
         scheduler->enqueue(scheduler, &processes[i]);
     }
@@ -135,7 +141,7 @@ void simulation_step() {
         return;
         // memory free if needed
     }
-    else if (current->pc >= current->num_instructions){
+    else if (current->pc >= current->mem_high){
         current->state = TERMINATED;
     }
     else {
@@ -165,41 +171,42 @@ int main() {
         }
 
         // 3. Handle User Input
-        int user_action = get_user_action(); // hypothetical function: returns Start/Step/Stop/Reset/Exit
+        //int user_action = get_user_action(); // hypothetical function: returns Start/Step/Stop/Reset/Exit
+        // int user_action=scanf
 
-        switch (user_action) {
-            case ACTION_START:
-                simulation_running = true;
-                auto_mode = true;
-                break;
+        // switch (user_action) {
+        //     case ACTION_START:
+        //         simulation_running = true;
+        //         auto_mode = true;
+        //         break;
 
-            case ACTION_STEP:
-                simulation_running = true;
-                auto_mode = false;
-                break;
+        //     case ACTION_STEP:
+        //         simulation_running = true;
+        //         auto_mode = false;
+        //         break;
 
-            case ACTION_STOP:
-                simulation_running = false;
-                break;
+        //     case ACTION_STOP:
+        //         simulation_running = false;
+        //         break;
 
-            case ACTION_RESET:
-                // Cleanup and Reload Everything
-                scheduler->destroy(scheduler);
-                mem_init();
-                sem_init_all();
-                choose_scheduler();
-                load_programs();
-                clock_tick = 0;
-                simulation_running = false;
-                auto_mode = false;
-                break;
+        //     case ACTION_RESET:
+        //         // Cleanup and Reload Everything
+        //         scheduler->destroy(scheduler);
+        //         mem_init();
+        //         sem_init_all();
+        //         choose_scheduler();
+        //         load_programs();
+        //         clock_tick = 0;
+        //         simulation_running = false;
+        //         auto_mode = false;
+        //         break;
 
-            case ACTION_EXIT:
-                // Cleanup and Exit Program
-                scheduler->destroy(scheduler);
-                exit_program = true;
-                break;
-        }
+        //     case ACTION_EXIT:
+        //         // Cleanup and Exit Program
+        //         scheduler->destroy(scheduler);
+        //         exit_program = true;
+        //         break;
+        // }
     }
 
     return 0;

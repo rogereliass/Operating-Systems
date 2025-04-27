@@ -2,6 +2,7 @@
 #define OS_H
 
 #include <stdint.h>
+#include "semaphore.h"
 
 #define MAX_PROCS     10
 #define MAX_MEM_WORDS 60
@@ -28,7 +29,7 @@ typedef struct {
 } instruction_t;
 
 // Process Control Block
-typedef struct {
+typedef struct pcb{
     int       pid;
     proc_state_t state;
     int       priority;

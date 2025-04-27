@@ -48,24 +48,24 @@ void print_instruction(const instruction_t *inst) {
            type_str, inst->arg1, inst->arg2);
 }
 
-int main() {
-    const char *filename = "../programs/Program_1.txt";  // Path to the program file
-    instruction_t *code = NULL;
+// int main() {
+//     const char *filename = "../programs/Program_1.txt";  // Path to the program file
+//     instruction_t *code = NULL;
 
-    int n_instructions = parse_program(filename, &code);
+//     int n_instructions = parse_program(filename, &code);
 
-    if (n_instructions < 0) {
-        printf("Failed to open or parse the file: %s\n", filename);
-        return 1;
-    }
+//     if (n_instructions < 0) {
+//         printf("Failed to open or parse the file: %s\n", filename);
+//         return 1;
+//     }
 
-    printf("Parsed %d instruction(s):\n", n_instructions);
-    for (int i = 0; i < n_instructions; i++) {
-        print_instruction(&code[i]);
-    }
+//     printf("Parsed %d instruction(s):\n", n_instructions);
+//     for (int i = 0; i < n_instructions; i++) {
+//         print_instruction(&code[i]);
+//     }
 
-    // Free the dynamically allocated memory
-    free(code);
+//     // Free the dynamically allocated memory
+//     free(code);
 
-    return 0;
-}
+//     return 0;
+// }

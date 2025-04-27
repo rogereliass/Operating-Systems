@@ -3,6 +3,7 @@
 #include "../include/semaphore.h"
 #include "../include/scheduler_interface.h"
 
+
 #define MAX_SEMAPHORES 3
 
 static semaphore_t semaphores[MAX_SEMAPHORES];
@@ -33,9 +34,8 @@ void sem_wait(char *name,pcb_t* pcb, Scheduler* scheduler ) {
     } else {
         // Move PCB to BLOCKED queue here
         pcb->state = BLOCKED;
-        
-        enqueue(sem->queue,pcb);
-        Scheduler->dequeue(scheduler);
+        enqueue(&(sem->queue),pcb);
+        dequeue(scheduler, pcb);
         
     }
 }
@@ -43,11 +43,11 @@ void sem_wait(char *name,pcb_t* pcb, Scheduler* scheduler ) {
 void sem_signal(char *name,Scheduler* scheduler) {
     semaphore_t *sem = get_semaphore(name);
     if (sem->queue_size > 0) {
-        pcb_t pcb = dequeue(sem->queue);
+        pcb_t* pcb = dequeue(&(sem->queue));
         sem->queue_size--;
         // Move PCB to READY queue here
         pcb->state = READY;
-        Scheduler->enqueue(scheduler);
+        enqueue(scheduler, pcb);
     } else {
         sem->value++;
     }

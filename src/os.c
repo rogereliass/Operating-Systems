@@ -10,6 +10,7 @@ void exec_print(pcb_t *proc, instruction_t *inst){
 void exec_assign(pcb_t *proc, instruction_t *inst){
     if (strcmp(inst->arg2, "input") == 0) {
         // Case 1: Input from user
+        char value_buffer[100];
         printf("Please enter a value: ");
         fgets(value_buffer, sizeof value_buffer, stdin);
         value_buffer[strcspn(value_buffer, "\n")] = '\0';  // remove newline
@@ -61,7 +62,7 @@ void exec_write_file(pcb_t *proc, instruction_t *inst) {
     FILE *file = fopen(inst->arg1, "w");
     if (!file) {
         printf("Error: could not open file %s\n", inst->arg1);
-        return NULL;
+        return;
     }
     fprintf(file, "%s", inst->arg2); // Writing the content to the file
     fclose(file);
