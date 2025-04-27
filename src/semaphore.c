@@ -1,7 +1,9 @@
 #include <string.h>
 #include <stdio.h>
+#include "../include/priority_queue.h"
 #include "../include/semaphore.h"
 #include "../include/scheduler_interface.h"
+
 
 
 #define MAX_SEMAPHORES 3

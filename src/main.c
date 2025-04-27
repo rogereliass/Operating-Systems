@@ -29,7 +29,7 @@ int auto_mode = 0;           // 0 = step-by-step, 1 = auto-run
 void load_programs();
 void choose_scheduler();
 void simulation_step();
-void update_gui();
+//void update_gui();
 
 void choose_scheduler() {
     //should be from gui
@@ -162,7 +162,7 @@ int main() {
 
     while (!exit_program) {
         // 1. Refresh GUI
-        update_gui(); 
+        //update_gui(); 
 
         // 2. Check Simulation State
         if (simulation_running) {

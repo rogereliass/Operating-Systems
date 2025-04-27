@@ -28,9 +28,9 @@ static void destroy_fcfs(Scheduler *self) {
     free(self);
 }
 pcb_t* dequeue_fcfs(Scheduler* sched, pcb_t* proc) {
-    // fcfs_data_t* data = (fcfs_data_t*) sched->data;
-    // if (data->front == data->rear) return NULL;
-    // return data->queue[data->front++]; 
+    fcfs_data_t* data = (fcfs_data_t*) sched->data;
+    if (data->front == data->rear) return NULL;
+    return data->queue[data->front++]; 
 }
 
 Scheduler* create_fcfs_scheduler() {
