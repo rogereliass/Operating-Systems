@@ -6,11 +6,11 @@
 typedef struct Scheduler Scheduler;
 
 struct Scheduler {
-    void (*enqueue)(Scheduler *self, pcb_t *proc);
+    void (*scheduler_enqueue)(Scheduler *self, pcb_t *proc);
     pcb_t* (*next)(Scheduler *self);
     void (*preempt)(Scheduler *self, pcb_t *proc);
     void (*destroy)(Scheduler *self);  // cleanup if needed
-    void (*dequeue)(Scheduler *self, pcb_t *proc);
+    void (*scheduler_dequeue)(Scheduler *self, pcb_t *proc);
 
     // scheduler-specific data
     void *data;

@@ -114,11 +114,11 @@ Scheduler* create_mlfq_scheduler() {
         queue_init(&data->levels[i], 1 << i); // quantum: 1, 2, 4, 8
     }
 
-    sched->enqueue = mlfq_enqueue;
+    sched->scheduler_enqueue = mlfq_enqueue;
     sched->next    = mlfq_next;
     sched->preempt = mlfq_preempt;
     sched->destroy = mlfq_destroy;
-    sched->dequeue = dequeue_mlfq;
+    sched->scheduler_dequeue = dequeue_mlfq;
     sched->data    = data;
 
     return sched;

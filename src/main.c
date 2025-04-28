@@ -105,7 +105,7 @@ void load_programs() {
         processes[i].mem_low = var_start;
         processes[i].mem_high = current_idx - 1;
 
-        scheduler->enqueue(scheduler, &processes[i]);
+        scheduler_enqueue(scheduler, &processes[i]);
     }
 }
 void simulation_step() {
