@@ -1,7 +1,7 @@
 #include "../include/os.h"
-#include "../include/memory.h"
-#include "../include/semaphore.h"
-#include "../include/scheduler_interface.h"
+// #include "../include/memory.h"
+// #include "../include/semaphore.h"
+// #include "../include/scheduler_interface.h"
 
 void exec_print(pcb_t *proc, instruction_t *inst){
     printf("%s",inst->arg1);
@@ -81,7 +81,7 @@ void exec_print_from_to(pcb_t *proc, instruction_t *inst){
     int from = val1 ? atoi(val1) : atoi(inst->arg1);
     int to   = val2 ? atoi(val2) : atoi(inst->arg2);
     if (from > to) {
-        for (int i = from; i >= to; i--) {
+        for (int i = to; i <= from; i++) {
             printf("%d ", i);
         }
     }

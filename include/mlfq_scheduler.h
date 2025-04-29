@@ -2,7 +2,7 @@
 #define MLFQ_SCHEDULER_H
 
 #include "scheduler_interface.h"
-#include "os.h"
+//#include "os.h"
 
 Scheduler* create_mlfq_scheduler();
 

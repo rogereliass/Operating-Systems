@@ -6,13 +6,6 @@
 #include "../include/fcfs_scheduler.h"
 #include "../include/round_robin_scheduler.h"
 #include "../include/mlfq_scheduler.h"
-#include "memory.c"
-#include "os.c"
-#include "parser.c"
-#include "semaphore.c"
-#include "fcfs_scheduler.c"
-#include "round_robin_scheduler.c"
-#include "mlfq_scheduler.c"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>

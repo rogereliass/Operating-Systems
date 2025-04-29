@@ -1,6 +1,6 @@
 #include <string.h>
 #include "../include/memory.h"
-#include "../include/os.h"
+//#include "../include/os.h"
 
 mem_word_t memory_pool[MAX_MEM_WORDS];
 
