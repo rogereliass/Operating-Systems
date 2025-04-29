@@ -10,14 +10,14 @@ Node* createNode(pcb_t* pcb) {
 void enqueue(Node** head, pcb_t* pcb) {
     Node* newNode = createNode(pcb);
 
-    if (*head == NULL || pcb.priority < (*head)->pcb.priority) {
+    if (*head == NULL || pcb->priority < (*head)->pcb->priority) {
         newNode->next = *head;
         *head = newNode;
         return;
     }
 
     Node* current = *head;
-    while (current->next != NULL && current->next->pcb.priority <= pcb.priority) {
+    while (current->next != NULL && current->next->pcb->priority <= pcb->priority) {
         current = current->next;
     }
 

@@ -92,11 +92,11 @@ void exec_print_from_to(pcb_t *proc, instruction_t *inst){
     }
     printf("\n");
 }
-void exec_semWait(pcb_t *proc, instruction_t *inst, Scheduler* scheduler){
-    char* name = inst->arg1;
-    sem_wait(name,proc,scheduler);
-}
-void exec_semSignal(instruction_t *inst, Scheduler* scheduler){
-    char* name = inst->arg1;
-    sem_signal(name,scheduler);
-}
+// void exec_semWait(pcb_t *proc, instruction_t *inst, Scheduler* scheduler){
+//     char* name = inst->arg1;
+//     sem_wait(name,proc,scheduler);
+// }
+// void exec_semSignal(instruction_t *inst, Scheduler* scheduler){
+//     char* name = inst->arg1;
+//     sem_signal(name,scheduler);
+// }

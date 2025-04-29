@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#include "semaphore.h"
+#include "memory.h"
 
 #define MAX_PROCS     10
 #define MAX_MEM_WORDS 60
@@ -47,7 +47,7 @@ void exec_assign(pcb_t *proc, instruction_t *inst);
 void exec_write_file(pcb_t *proc, instruction_t *inst);
 void exec_read_file(pcb_t *proc, instruction_t *inst);
 void exec_print_from_to(pcb_t *proc, instruction_t *inst);
-void exec_semWait(pcb_t proc, instruction_t *inst, Scheduler scheduler);
-void exec_semSignal(instruction_t inst, Scheduler scheduler);
+// void exec_semWait(pcb_t proc, instruction_t *inst, Scheduler* scheduler);
+// void exec_semSignal(instruction_t inst, Scheduler* scheduler);
 
 #endif

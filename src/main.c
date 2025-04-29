@@ -98,7 +98,7 @@ void load_programs() {
         processes[i].mem_low = var_start;
         processes[i].mem_high = current_idx - 1;
 
-        scheduler_enqueue(scheduler, &processes[i]);
+        scheduler->scheduler_enqueue(scheduler, &processes[i]);
     }
 }
 void simulation_step() {
@@ -123,8 +123,8 @@ void simulation_step() {
         case INST_PRINT_FROM_TO: exec_print_from_to(current, inst); break;
         case INST_WRITE_FILE: exec_write_file(current, inst); break;
         case INST_READ_FILE: exec_read_file(current, inst); break;
-        case INST_SEM_WAIT: exec_semWait(current, inst,scheduler); break;
-        case INST_SEM_SIGNAL: exec_semSignal(inst,scheduler); break;
+        case INST_SEM_WAIT: sem_wait(inst->arg1,current,scheduler); break;
+        case INST_SEM_SIGNAL: sem_signal(inst->arg1,scheduler); break;
     }
 
     current->pc++;

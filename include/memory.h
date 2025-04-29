@@ -1,9 +1,10 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include "os.h"
+//#include "os.h"
 
 // Each “word” maps a name → value string
+#define MAX_MEM_WORDS 60
 typedef struct {
     char name[32];
     char value[64];

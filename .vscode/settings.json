@@ -7,6 +7,7 @@
         "scheduler.h": "c",
         "semaphore.h": "c",
         "string.h": "c",
-        "fcfs_scheduler.h": "c"
+        "fcfs_scheduler.h": "c",
+        "typeinfo": "c"
     }
 }
