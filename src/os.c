@@ -11,7 +11,7 @@ void exec_assign(pcb_t *proc, instruction_t *inst){
     char value_buffer[100];
     if (strcmp(inst->arg2, "input") == 0) {
         // Case 1: Input from user
-        printf("Please enter a value: ");
+        printf("Please enter a value for process %d: ", proc->pid);
         fgets(value_buffer, sizeof value_buffer, stdin);
         value_buffer[strcspn(value_buffer, "\n")] = '\0';  // remove newline
     }
@@ -23,12 +23,14 @@ void exec_assign(pcb_t *proc, instruction_t *inst){
             printf("Error: Variable '%s' not found in memory.\n", filename_var);
             return;
         }
+        printf("Reading file %s\n", filename);
 
         FILE *file = fopen(filename, "r");
         if (!file) {
             printf("Error: Could not open file '%s'\n", filename);
             return;
         }
+        printf("File opened successfully\n");
 
         // Read file content
         fseek(file, 0, SEEK_END);
@@ -37,6 +39,7 @@ void exec_assign(pcb_t *proc, instruction_t *inst){
         fread(value_buffer, 1, size, file);
         value_buffer[size] = '\0';
         fclose(file);
+        printf("File content read successfully\n");
     }
     else {
         // Case 3: Direct value (e.g., number, string, another var)
@@ -51,6 +54,7 @@ void exec_assign(pcb_t *proc, instruction_t *inst){
     // Store the final result in memory as variable `x`
     for (int i = proc->mem_low; i <= proc->mem_high; i++) {
         if (memory_pool[i].name[0] == '\0' || strcmp(memory_pool[i].name, inst->arg1) == 0) {
+            printf("Assigning %s to %s\n", value_buffer, inst->arg1);
             mem_write(i, inst->arg1, value_buffer);
             return;
         }
@@ -64,7 +68,8 @@ void exec_write_file(pcb_t *proc, instruction_t *inst) {
         printf("Error: could not open file %s\n", inst->arg1);
         return;
     }
-    fprintf(file, "%s", inst->arg2); // Writing the content to the file
+    fprintf(file, "%s", inst->arg2);
+    printf("Writing %s to %s\n", inst->arg2, inst->arg1);
     fclose(file);
 }
 
@@ -72,7 +77,13 @@ void exec_read_file(pcb_t *proc, instruction_t *inst) {
     FILE *file = fopen(inst->arg1, "r");
     if (!file) {
         printf("Error: could not open file %s\n", inst->arg1);
+        return;
     }
+    printf("File opened successfully\n");
+    char buffer[100];
+    fgets(buffer, sizeof(buffer), file);
+    printf("Read %s from %s\n", buffer, inst->arg1);
+    fclose(file);
 }
 void exec_print_from_to(pcb_t *proc, instruction_t *inst){
     const char *val1 = mem_read(proc->mem_low, proc->mem_high, inst->arg1);
@@ -80,6 +91,7 @@ void exec_print_from_to(pcb_t *proc, instruction_t *inst){
     // If val1 or val2 aren't found, assume direct numbers
     int from = val1 ? atoi(val1) : atoi(inst->arg1);
     int to   = val2 ? atoi(val2) : atoi(inst->arg2);
+    printf("Printing from %d to %d\n", from, to);
     if (from > to) {
         for (int i = from; i >= to; i--) {
             printf("%d ", i);
@@ -91,6 +103,7 @@ void exec_print_from_to(pcb_t *proc, instruction_t *inst){
         }
     }
     printf("\n");
+
 }
 // void exec_semWait(pcb_t *proc, instruction_t *inst, Scheduler* scheduler){
 //     char* name = inst->arg1;
