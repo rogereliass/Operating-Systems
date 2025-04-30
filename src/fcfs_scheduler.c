@@ -21,6 +21,9 @@ static pcb_t* next_fcfs(Scheduler *self) {
 }
 
 static void preempt_fcfs(Scheduler *self, pcb_t *proc) {
+    fcfs_data_t *q = (fcfs_data_t*) self->data;
+    q->queue[(q->head)-1] = proc;
+    q->head --;
 }
 
 static void destroy_fcfs(Scheduler *self) {

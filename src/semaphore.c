@@ -37,6 +37,7 @@ void sem_wait(char *name,pcb_t* pcb, Scheduler* scheduler ) {
     } else {
         // Move PCB to BLOCKED queue here
         pcb->state = BLOCKED;
+        sem->queue_size++;
         enqueue(&(sem->queue),pcb);
         scheduler->scheduler_dequeue(scheduler, pcb);
         

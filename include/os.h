@@ -39,7 +39,7 @@ typedef struct pcb{
     int       pc;         // index of next instruction
     int       mem_low;    // lower memory index
     int       mem_high;   // upper memory index
-    instruction_t *code;  // pointer into loaded code array
+    //instruction_t *code;  // pointer into loaded code array
 } pcb_t;
 
 void exec_print(pcb_t *proc, instruction_t *inst);

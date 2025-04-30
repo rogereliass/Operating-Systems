@@ -81,7 +81,7 @@ void exec_print_from_to(pcb_t *proc, instruction_t *inst){
     int from = val1 ? atoi(val1) : atoi(inst->arg1);
     int to   = val2 ? atoi(val2) : atoi(inst->arg2);
     if (from > to) {
-        for (int i = to; i <= from; i++) {
+        for (int i = from; i >= to; i--) {
             printf("%d ", i);
         }
     }

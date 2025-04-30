@@ -15,7 +15,7 @@ Scheduler* scheduler = NULL;
 pcb_t processes[3];
 int num_processes = 0;
 int clock_tick = 0;
-int simulation_running = 0; // 0 = stopped, 1 = running
+int simulation_running = 1; // 0 = stopped, 1 = running
 int auto_mode = 0;           // 0 = step-by-step, 1 = auto-run
 
 // Function Prototypes
@@ -114,8 +114,7 @@ void simulation_step() {
     current->state = RUNNING;
 
     // Fetch and execute one instruction
-    instruction_t* inst = &current->code[current->pc];
-
+    instruction_t* inst = parse_program(mem_read(current->pc, current->pc, "instruction"));
     // Dispatch based on instruction type
     switch (inst->type) {
         case INST_ASSIGN: exec_assign(current, inst); break;
