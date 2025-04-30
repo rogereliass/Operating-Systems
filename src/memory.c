@@ -5,8 +5,9 @@
 mem_word_t memory_pool[MAX_MEM_WORDS];
 
 void mem_init(void) {
-    for (int i = 0; i < MAX_MEM_WORDS; i++)
+    for (int i = 0; i < MAX_MEM_WORDS; i++){
         memory_pool[i].name[0] = '\0';
+    }
 }
 
 int mem_alloc(int n_words) {
@@ -33,7 +34,7 @@ void mem_write(int idx, const char *name, const char *value) {
     strncpy(memory_pool[idx].value, value, sizeof memory_pool[idx].value -1);
 }
 
-const char *mem_read(int low, int high, const char *name) {
+char *mem_read(int low, int high, const char *name) {
     for (int i = low; i <= high; i++) {
         if (strcmp(memory_pool[i].name, name) == 0){
             return memory_pool[i].value;

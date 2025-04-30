@@ -1,3 +1,5 @@
+#ifndef PRIORITY_QUEUE_H
+#define PRIORITY_QUEUE_H
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,3 +16,5 @@ Node* createNode(pcb_t* pcb);
 void enqueue(Node** head, pcb_t* pcb);
 pcb_t* dequeue(Node** head);
 int isEmpty(Node* head);
+
+#endif

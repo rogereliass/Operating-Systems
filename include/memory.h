@@ -26,6 +26,6 @@ void mem_free(int start, int n_words);
 void mem_write(int idx, const char *name, const char *value);
 
 // Utility: read value by name within a range
-const char *mem_read(int low, int high, const char *name);
+char *mem_read(int low, int high, const char *name);
 
 #endif // MEMORY_H

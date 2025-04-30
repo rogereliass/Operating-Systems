@@ -159,7 +159,7 @@ int main() {
         // 2. Check Simulation State
         if (simulation_running) {
             simulation_step(); // one clock tick
-            if (!auto_mode) simulation_running = false; // in step mode, stop after one step
+            // if (!auto_mode) simulation_running = false; // in step mode, stop after one step
         }
 
         // 3. Handle User Input
