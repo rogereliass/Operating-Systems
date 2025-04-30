@@ -46,6 +46,11 @@ void choose_scheduler() {
             printf("Invalid choice.\n");
             exit(1);
     }
+    
+    if (!scheduler) {
+        printf("Failed to create scheduler. Out of memory.\n");
+        exit(1);
+    }
 }
 void load_programs() {
     const char* filenames[] = {

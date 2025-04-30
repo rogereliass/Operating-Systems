@@ -38,11 +38,19 @@ static void dequeue_fcfs(Scheduler* sched, pcb_t* proc) {
 
 Scheduler* create_fcfs_scheduler() {
     Scheduler *s = malloc(sizeof(Scheduler));
+    if (!s) return NULL;
+    
+    s->data = calloc(1, sizeof(fcfs_data_t));
+    if (!s->data) {
+        free(s);
+        return NULL;
+    }
+    
     s->scheduler_enqueue = enqueue_fcfs;
     s->next = next_fcfs;
     s->preempt = preempt_fcfs;
     s->destroy = destroy_fcfs;
     s->scheduler_dequeue = dequeue_fcfs;  
-    s->data = calloc(1, sizeof(fcfs_data_t));
+    
     return s;
 }
