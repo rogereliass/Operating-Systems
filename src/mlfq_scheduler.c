@@ -52,12 +52,22 @@ static void queue_remove(mlfq_queue_t* q, pcb_t* proc) {
 static void mlfq_enqueue(Scheduler* sched, pcb_t* proc) {
     mlfq_data_t* data = (mlfq_data_t*) sched->data;
     int level = proc->priority;
-    if (level < 0 || level >= NUM_QUEUES) level = NUM_QUEUES - 1;
+    if (level < 0 || level >= NUM_QUEUES) {
+        level = NUM_QUEUES - 1;
+        proc->priority = level;
+    }
     queue_push(&data->levels[level], proc);
 }
 
 static pcb_t* mlfq_next(Scheduler* sched) {
     mlfq_data_t* data = (mlfq_data_t*) sched->data;
+    // Check if any process is currently running
+    for (int i = 0; i < NUM_QUEUES; ++i) {
+        if(data->levels[i]->current && data->levels[i]->current->state != TERMINATED) {
+            // If current process is still running, return it
+            return data->levels[i]->current;
+        }
+    }
 
     for (int i = 0; i < NUM_QUEUES; ++i) {
         mlfq_queue_t* q = &data->levels[i];
@@ -101,9 +111,10 @@ static void mlfq_destroy(Scheduler* sched) {
 
 static void dequeue_mlfq(Scheduler* sched, pcb_t* proc) {
     mlfq_data_t* data = (mlfq_data_t*) sched->data;
-    for (int i = 0; i < NUM_QUEUES; ++i) {
-        queue_remove(&data->levels[i], proc);
-    }
+    // for (int i = 0; i < NUM_QUEUES; ++i) {
+    //     queue_remove(&data->levels[i], proc);
+    // }
+    data->levels[proc->priority]->current = NULL;
 }
 
 Scheduler* create_mlfq_scheduler() {
