@@ -20,11 +20,11 @@ static void enqueue_rr(Scheduler *self, pcb_t *proc) {
 static pcb_t* next_rr(Scheduler *self) {
     rr_data_t *rr = (rr_data_t*) self->data;
 
-    if(rr->current) {
+    if(rr->current && rr->current->state != TERMINATED) {
         // If current process is still running, return it
         return rr->current;
     }
-    else if (rr->head < rr->tail) {
+    if (rr->head < rr->tail) {
         rr->current = rr->queue[rr->head++];
         rr->ticks_used = 0;
         return rr->current;
@@ -47,8 +47,8 @@ static void preempt_rr(Scheduler *self, pcb_t *proc) {
     } else {
         // Let it continue
         rr->current = proc;
-        // rr->queue[(rr->head)-1] = proc;
-        // rr->head--;
+        //rr->queue[(rr->head)-1] = proc;
+        //rr->head--;
     }
 }
 
@@ -69,7 +69,7 @@ static void dequeue_rr(Scheduler* sched, pcb_t* proc) {
 
     // rr->tail = new_tail;
     rr->current = NULL;
-    rr->ticks_used = 0;
+    //rr->ticks_used = 0;
 }
 
 
