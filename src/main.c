@@ -29,6 +29,7 @@ void choose_scheduler() {
     printf("Choose scheduler:\n1. FCFS\n2. RR\n3. MLFQ\nChoice: ");
     int choice, quantum;
     scanf("%d", &choice);
+    while (getchar() != '\n'); // Consume trailing newline
 
     switch (choice) {
         case 1:
@@ -37,6 +38,7 @@ void choose_scheduler() {
         case 2:
             printf("Enter quantum: ");
             scanf("%d", &quantum);
+            while (getchar() != '\n'); // Consume trailing newline
             scheduler = create_rr_scheduler(quantum);
             break;
         case 3:

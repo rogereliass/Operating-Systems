@@ -12,6 +12,7 @@ void exec_assign(pcb_t *proc, instruction_t *inst){
     if (strcmp(inst->arg2, "input") == 0) {
         // Case 1: Input from user
         printf("Please enter a value for process %d: ", proc->pid);
+        fflush(stdout); // <-- ADD THIS LINE
         fgets(value_buffer, sizeof value_buffer, stdin);
         value_buffer[strcspn(value_buffer, "\n")] = '\0';  // remove newline
     }
