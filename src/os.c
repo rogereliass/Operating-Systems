@@ -78,7 +78,7 @@ void exec_assign(pcb_t *proc, instruction_t *inst){
         value_buffer[sizeof(value_buffer) - 1] = '\0';
     }
     // Store the final result in memory as variable `x`
-    for (int i = proc->mem_low; i <= proc->mem_high; i++) {
+    for (int i = proc->mem_low; i <= proc->mem_low+2; i++) {
         if (memory_pool[i].name[0] == '\0' || strcmp(memory_pool[i].name, inst->arg1) == 0) {
             printf("Assigning %s to %s\n", value_buffer, inst->arg1);
             mem_write(i, inst->arg1, value_buffer);
@@ -89,12 +89,14 @@ void exec_assign(pcb_t *proc, instruction_t *inst){
 }
 
 void exec_write_file(pcb_t *proc, instruction_t *inst) {
-    FILE *file = fopen(inst->arg1, "w");
+    char* file_name = mem_read(proc->mem_low, proc->mem_high, inst->arg1);
+    FILE *file = fopen(file_name, "w");
     if (!file) {
         printf("Error: could not open file %s\n", inst->arg1);
         return;
     }
-    fprintf(file, "%s", inst->arg2);
+    char* write_val = mem_read(proc->mem_low, proc->mem_high, inst->arg2);
+    fprintf(file, "%s", write_val);
     printf("Writing %s to %s\n", inst->arg2, inst->arg1);
     fclose(file);
 }

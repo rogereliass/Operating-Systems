@@ -224,7 +224,7 @@ void simulation_step() {
         return;
         // memory free if needed
     }
-    else if (current->pc >= current->mem_high){
+    else if (current->pc >= current->pcb_index){
         current->state = TERMINATED;
     }
     else {
