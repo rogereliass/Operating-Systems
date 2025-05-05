@@ -37,6 +37,7 @@ void sem_wait(char *name,pcb_t* pcb, Scheduler* scheduler ) {
     } else {
         // Move PCB to BLOCKED queue here
         pcb->state = BLOCKED;
+        update_pcb_in_memory(pcb); // Update PCB in memory
         sem->queue_size++;
         enqueue(&(sem->queue),pcb);
         scheduler->scheduler_dequeue(scheduler, pcb);
@@ -51,6 +52,7 @@ void sem_signal(char *name,Scheduler* scheduler) {
         sem->queue_size--;
         // Move PCB to READY queue here
         pcb->state = READY;
+        update_pcb_in_memory(pcb); // Update PCB in memory
         scheduler->scheduler_enqueue(scheduler, pcb);
     } else {
         sem->value++;

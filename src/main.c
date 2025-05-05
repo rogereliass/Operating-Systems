@@ -93,7 +93,6 @@ void load_programs() {
             current_idx++;
             instruction_count++;
         }
-        fclose(f);
 
         // Setup PCB
         processes[i].pid = i + 1;
@@ -101,9 +100,74 @@ void load_programs() {
         processes[i].priority = 0; // MLFQ start at top level
         processes[i].pc = code_mem_start;
         processes[i].mem_low = var_start;
-        processes[i].mem_high = current_idx - 1;
+        processes[i].pcb_index = current_idx; // where the PCB starts in memory
+
+        if (current_idx >= MAX_MEM_WORDS) {
+            printf("Memory overflow loading %s\n", filenames[i]);
+            exit(1);
+        }
+        char *str = malloc(32);
+        snprintf(str, 32, "%d", processes[i].pid);
+        mem_write(current_idx, "pid", str);
+        current_idx++;
+
+        if (current_idx >= MAX_MEM_WORDS) {
+            printf("Memory overflow loading %s\n", filenames[i]);
+            exit(1);
+        }
+        mem_write(current_idx, "state", state_type_to_string(processes[i].state));
+        current_idx++;
+
+        if (current_idx >= MAX_MEM_WORDS) {
+            printf("Memory overflow loading %s\n", filenames[i]);
+            exit(1);
+        }
+        memset(str, 0, sizeof str); // Clear the buffer
+        snprintf(str, 32, "%d", processes[i].priority);
+        mem_write(current_idx, "priority", str);
+        current_idx++;
+
+        if (current_idx >= MAX_MEM_WORDS) {
+            printf("Memory overflow loading %s\n", filenames[i]);
+            exit(1);
+        }
+        memset(str, 0, sizeof str); // Clear the buffer
+        snprintf(str, 32, "%d", processes[i].pc);
+        mem_write(current_idx, "pc", str);
+        current_idx++;
+
+        if (current_idx >= MAX_MEM_WORDS) {
+            printf("Memory overflow loading %s\n", filenames[i]);
+            exit(1);
+        }
+        memset(str, 0, sizeof str); // Clear the buffer
+        snprintf(str, 32, "%d", processes[i].mem_low);
+        mem_write(current_idx, "mem_low", str); 
+        current_idx++;
+
+        processes[i].mem_high = current_idx + 1;
+
+        if (current_idx >= MAX_MEM_WORDS) {
+            printf("Memory overflow loading %s\n", filenames[i]);
+            exit(1);
+        }
+        memset(str, 0, sizeof str); // Clear the buffer
+        snprintf(str, 32, "%d", processes[i].mem_high);
+        mem_write(current_idx, "mem_high", str);
+        current_idx++;
+
+        if (current_idx >= MAX_MEM_WORDS) {
+            printf("Memory overflow loading %s\n", filenames[i]);
+            exit(1);
+        }
+        memset(str, 0, sizeof str); // Clear the buffer
+        snprintf(str, 32, "%d", processes[i].pcb_index);
+        mem_write(current_idx, "pcb_index", str);
+        free(str); 
+        current_idx++;
 
         scheduler->scheduler_enqueue(scheduler, &processes[i]);
+        fclose(f);
     }
 }
 void simulation_step() {
@@ -117,6 +181,8 @@ void simulation_step() {
     }
 
     current->state = RUNNING;
+    update_pcb_in_memory(current); // Update PCB in memory
+    printf("Running process %d (PC: %d)\n", current->pid, current->pc);
 
     // Fetch and execute one instruction
     instruction_t* inst = parse_program(mem_read(current->pc, current->pc, "instruction"));
@@ -132,6 +198,7 @@ void simulation_step() {
     }
 
     current->pc++;
+    update_pcb_in_memory(current); // Update PCB in memory
 
     // Check if process finished
     if ( current->state == BLOCKED) {

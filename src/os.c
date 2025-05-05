@@ -17,8 +17,11 @@ void exec_assign(pcb_t *proc, instruction_t *inst){
     }
     else if(strncmp(inst->arg2, "readFile", 8) == 0){
         // Case 2: Nested instruction: readFile a
-        char *filename_var = strtok(inst->arg2 + 9, " \n");  // get the next token after "readFile"
-        const char *filename = mem_read(proc->mem_low, proc->mem_high, filename_var);
+        // char *filename_var = strtok(inst->arg2 + 9, " \n");  // get the next token after "readFile"
+        char filename_var[256];  // Allocate a buffer to hold the filename
+        sscanf(inst->arg2 + 9, "%255s", filename_var);
+
+        char *filename = mem_read(proc->mem_low, proc->mem_high, filename_var);
         if (!filename) {
             printf("Error: Variable '%s' not found in memory.\n", filename_var);
             return;
@@ -43,7 +46,7 @@ void exec_assign(pcb_t *proc, instruction_t *inst){
     }
     else {
         // Case 3: Direct value (e.g., number, string, another var)
-        const char *mem_value = mem_read(proc->mem_low, proc->mem_high, inst->arg2);
+        char *mem_value = mem_read(proc->mem_low, proc->mem_high, inst->arg2);
         if (mem_value) {
             strncpy(value_buffer, mem_value, sizeof(value_buffer) - 1);
         } else {
@@ -86,8 +89,8 @@ void exec_read_file(pcb_t *proc, instruction_t *inst) {
     fclose(file);
 }
 void exec_print_from_to(pcb_t *proc, instruction_t *inst){
-    const char *val1 = mem_read(proc->mem_low, proc->mem_high, inst->arg1);
-    const char *val2 = mem_read(proc->mem_low, proc->mem_high, inst->arg2);
+    char *val1 = mem_read(proc->mem_low, proc->mem_high, inst->arg1);
+    char *val2 = mem_read(proc->mem_low, proc->mem_high, inst->arg2);
     // If val1 or val2 aren't found, assume direct numbers
     int from = val1 ? atoi(val1) : atoi(inst->arg1);
     int to   = val2 ? atoi(val2) : atoi(inst->arg2);
@@ -105,6 +108,41 @@ void exec_print_from_to(pcb_t *proc, instruction_t *inst){
     printf("\n");
 
 }
+
+char * state_type_to_string(proc_state_t state) {
+    switch (state) {
+        case NEW: return "NEW";
+        case READY: return "READY";
+        case RUNNING: return "RUNNING";
+        case BLOCKED: return "BLOCKED";
+        case TERMINATED: return "TERMINATED";
+        default: return "UNKNOWN";
+    }
+}
+
+// Update the PCB in memory with the new values
+// This function assumes that the PCB is stored in memory and that
+// the memory pool is already initialized
+void update_pcb_in_memory(pcb_t *proc) {
+    int idx = proc->pcb_index;
+    char str[32];
+    // snprintf(str, sizeof str, "%d", proc->pid);
+    // mem_write(idx, "pid", str);
+    mem_write(idx + 1, "state", state_type_to_string(proc->state));
+    // memset(str, 0, sizeof str); // Clear the buffer
+    snprintf(str, sizeof str, "%d", proc->priority);
+    mem_write(idx + 2, "priority", str);
+    memset(str, 0, sizeof str); // Clear the buffer
+    snprintf(str, sizeof str, "%d", proc->pc);
+    mem_write(idx + 3, "pc", str);
+    memset(str, 0, sizeof str); // Clear the buffer
+    snprintf(str, sizeof str, "%d", proc->mem_low);
+    mem_write(idx + 4, "mem_low", str);
+    memset(str, 0, sizeof str); // Clear the buffer
+    snprintf(str, sizeof str, "%d", proc->mem_high);
+    mem_write(idx + 5, "mem_high", str);
+}
+
 // void exec_semWait(pcb_t *proc, instruction_t *inst, Scheduler* scheduler){
 //     char* name = inst->arg1;
 //     sem_wait(name,proc,scheduler);

@@ -23,9 +23,9 @@ int  mem_alloc(int n_words);
 void mem_free(int start, int n_words);
 
 // Utility: write a name/value into word `idx`
-void mem_write(int idx, const char *name, const char *value);
+void mem_write(int idx, char *name,  char *value);
 
 // Utility: read value by name within a range
-char *mem_read(int low, int high, const char *name);
+char *mem_read(int low, int high,  char *name);
 
 #endif // MEMORY_H

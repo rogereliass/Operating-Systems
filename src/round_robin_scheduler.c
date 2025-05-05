@@ -41,6 +41,7 @@ static void preempt_rr(Scheduler *self, pcb_t *proc) {
     if (rr->ticks_used >= rr->quantum) {
         // Time's up — rotate process
         proc->state = READY;
+        update_pcb_in_memory(proc); // Update PCB in memory
         enqueue_rr(self, proc);
         rr->current = NULL;
         rr->ticks_used = 0;

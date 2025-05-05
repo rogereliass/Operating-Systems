@@ -55,6 +55,7 @@ static void mlfq_enqueue(Scheduler* sched, pcb_t* proc) {
     if (level < 0 || level >= NUM_QUEUES) {
         level = NUM_QUEUES - 1;
         proc->priority = level;
+        update_pcb_in_memory(proc); // Update PCB in memory
     }
     queue_push(&data->levels[level], proc);
 }
@@ -94,8 +95,10 @@ static void mlfq_preempt(Scheduler* sched, pcb_t* proc) {
         // Process used up quantum, demote if possible
         if (proc->priority < NUM_QUEUES - 1) {
             proc->priority++;
+            update_pcb_in_memory(proc); // Update PCB in memory
         }
         proc->state = READY;
+        update_pcb_in_memory(proc); // Update PCB in memory
         queue_push(&data->levels[proc->priority], proc);
         q->current = NULL;
         q->ticks_used = 0;

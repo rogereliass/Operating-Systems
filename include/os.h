@@ -39,6 +39,7 @@ typedef struct pcb{
     int       pc;         // index of next instruction
     int       mem_low;    // lower memory index
     int       mem_high;   // upper memory index
+    int       pcb_index;  // inicates when pcb starts in memory (constant value)
     //instruction_t *code;  // pointer into loaded code array
 } pcb_t;
 
@@ -47,6 +48,8 @@ void exec_assign(pcb_t *proc, instruction_t *inst);
 void exec_write_file(pcb_t *proc, instruction_t *inst);
 void exec_read_file(pcb_t *proc, instruction_t *inst);
 void exec_print_from_to(pcb_t *proc, instruction_t *inst);
+char * state_type_to_string(proc_state_t state);
+void update_pcb_in_memory(pcb_t *proc);
 // void exec_semWait(pcb_t proc, instruction_t *inst, Scheduler* scheduler);
 // void exec_semSignal(instruction_t inst, Scheduler* scheduler);
 

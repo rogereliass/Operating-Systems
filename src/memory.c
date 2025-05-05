@@ -29,12 +29,12 @@ void mem_free(int start, int n_words) {
     }
 }
 
-void mem_write(int idx, const char *name, const char *value) {
+void mem_write(int idx, char *name, char *value) {
     strncpy(memory_pool[idx].name, name, sizeof memory_pool[idx].name -1);
     strncpy(memory_pool[idx].value, value, sizeof memory_pool[idx].value -1);
 }
 
-char *mem_read(int low, int high, const char *name) {
+char *mem_read(int low, int high, char *name) {
     for (int i = low; i <= high; i++) {
         if (strcmp(memory_pool[i].name, name) == 0){
             return memory_pool[i].value;
