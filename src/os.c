@@ -38,11 +38,34 @@ void exec_assign(pcb_t *proc, instruction_t *inst){
         // Read file content
         fseek(file, 0, SEEK_END);
         long size = ftell(file);
-        rewind(file);
-        fread(value_buffer, 1, size, file);
-        value_buffer[size] = '\0';
+        // --- START OF CHANGES ---
+        if (size < 0) { // Add error checking for ftell
+            perror("Error getting file size");
+            fclose(file);
+            // Maybe set value_buffer to an error string or return?
+            // For now, let's make it empty.
+            value_buffer[0] = '\0';
+            // Skip the rest of the file reading logic
+        } else {
+            rewind(file);
+            // Calculate how many bytes we can actually read safely
+            size_t buffer_capacity = sizeof(value_buffer) - 1;
+            size_t bytes_to_read = (size < buffer_capacity) ? (size_t)size : buffer_capacity;
+
+            // Read only that many bytes
+            size_t bytes_read = fread(value_buffer, 1, bytes_to_read, file);
+
+            // Null-terminate the buffer *after* the bytes actually read
+            value_buffer[bytes_read] = '\0';
+
+            // Optional: Check if fread encountered an error
+            if (bytes_read != bytes_to_read && ferror(file)) {
+                perror("Error reading file content");
+            }
+             printf("File content read successfully (%zu bytes)\n", bytes_read);
+        }
+        // --- END OF CHANGES ---
         fclose(file);
-        printf("File content read successfully\n");
     }
     else {
         // Case 3: Direct value (e.g., number, string, another var)

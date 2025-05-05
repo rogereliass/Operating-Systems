@@ -122,7 +122,7 @@ void load_programs() {
             printf("Memory overflow loading %s\n", filenames[i]);
             exit(1);
         }
-        memset(str, 0, sizeof str); // Clear the buffer
+        memset(str, 0, 32); // Clear the buffer
         snprintf(str, 32, "%d", processes[i].priority);
         mem_write(current_idx, "priority", str);
         current_idx++;
@@ -131,7 +131,7 @@ void load_programs() {
             printf("Memory overflow loading %s\n", filenames[i]);
             exit(1);
         }
-        memset(str, 0, sizeof str); // Clear the buffer
+        memset(str, 0, 32); // Clear the buffer
         snprintf(str, 32, "%d", processes[i].pc);
         mem_write(current_idx, "pc", str);
         current_idx++;
@@ -140,7 +140,7 @@ void load_programs() {
             printf("Memory overflow loading %s\n", filenames[i]);
             exit(1);
         }
-        memset(str, 0, sizeof str); // Clear the buffer
+        memset(str, 0, 32); // Clear the buffer
         snprintf(str, 32, "%d", processes[i].mem_low);
         mem_write(current_idx, "mem_low", str); 
         current_idx++;
@@ -151,7 +151,7 @@ void load_programs() {
             printf("Memory overflow loading %s\n", filenames[i]);
             exit(1);
         }
-        memset(str, 0, sizeof str); // Clear the buffer
+        memset(str, 0, 32); // Clear the buffer
         snprintf(str, 32, "%d", processes[i].mem_high);
         mem_write(current_idx, "mem_high", str);
         current_idx++;
@@ -160,7 +160,7 @@ void load_programs() {
             printf("Memory overflow loading %s\n", filenames[i]);
             exit(1);
         }
-        memset(str, 0, sizeof str); // Clear the buffer
+        memset(str, 0, 32); // Clear the buffer
         snprintf(str, 32, "%d", processes[i].pcb_index);
         mem_write(current_idx, "pcb_index", str);
         free(str); 
@@ -185,7 +185,24 @@ void simulation_step() {
     printf("Running process %d (PC: %d)\n", current->pid, current->pc);
 
     // Fetch and execute one instruction
-    instruction_t* inst = parse_program(mem_read(current->pc, current->pc, "instruction"));
+    char* instruction_string = mem_read(current->pc, current->pc, "instruction");
+    if (!instruction_string) {
+        printf("Error: Failed to read instruction for PID %d at PC %d. Terminating process.\n", current->pid, current->pc);
+        current->state = TERMINATED; // Mark process as terminated
+        update_pcb_in_memory(current); // Update its status in memory
+        return;
+    }
+    char instruction_copy[MAX_LINE_LEN];
+    strncpy(instruction_copy, instruction_string, sizeof(instruction_copy) - 1);
+    instruction_copy[sizeof(instruction_copy) - 1] = '\0';
+
+    instruction_t* inst = parse_program(instruction_copy);
+    if (!inst) {
+        printf("Error: Failed to parse instruction for PID %d at PC %d: '%s'. Terminating process.\n", current->pid, current->pc, instruction_copy);
+        current->state = TERMINATED;
+        update_pcb_in_memory(current);
+        return; // Stop processing this step
+    }
     // Dispatch based on instruction type
     switch (inst->type) {
         case INST_ASSIGN: exec_assign(current, inst); break;
@@ -196,6 +213,8 @@ void simulation_step() {
         case INST_SEM_WAIT: sem_wait(inst->arg1,current,scheduler); break;
         case INST_SEM_SIGNAL: sem_signal(inst->arg1,scheduler); break;
     }
+
+    free(inst);
 
     current->pc++;
     update_pcb_in_memory(current); // Update PCB in memory
