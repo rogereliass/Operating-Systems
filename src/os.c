@@ -4,7 +4,8 @@
 // #include "../include/scheduler_interface.h"
 
 void exec_print(pcb_t *proc, instruction_t *inst){
-    printf("%s",inst->arg1);
+    char* print_val = mem_read(proc->mem_low, proc->mem_high, inst->arg1);
+    printf("%s",print_val);
 }
 
 void exec_assign(pcb_t *proc, instruction_t *inst){
@@ -161,12 +162,12 @@ void update_pcb_in_memory(pcb_t *proc) {
     memset(str, 0, sizeof str); // Clear the buffer
     snprintf(str, sizeof str, "%d", proc->pc);
     mem_write(idx + 3, "pc", str);
-    memset(str, 0, sizeof str); // Clear the buffer
-    snprintf(str, sizeof str, "%d", proc->mem_low);
-    mem_write(idx + 4, "mem_low", str);
-    memset(str, 0, sizeof str); // Clear the buffer
-    snprintf(str, sizeof str, "%d", proc->mem_high);
-    mem_write(idx + 5, "mem_high", str);
+    // memset(str, 0, sizeof str); // Clear the buffer
+    // snprintf(str, sizeof str, "%d", proc->mem_low);
+    // mem_write(idx + 4, "mem_low", str);
+    // memset(str, 0, sizeof str); // Clear the buffer
+    // snprintf(str, sizeof str, "%d", proc->mem_high);
+    // mem_write(idx + 5, "mem_high", str);
 }
 
 // void exec_semWait(pcb_t *proc, instruction_t *inst, Scheduler* scheduler){

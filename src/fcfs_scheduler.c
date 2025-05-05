@@ -31,9 +31,13 @@ static void destroy_fcfs(Scheduler *self) {
     free(self);
 }
 static void dequeue_fcfs(Scheduler* sched, pcb_t* proc) {
-    // fcfs_data_t* data = (fcfs_data_t*) sched->data;
-    // if (data->front == data->rear) return NULL;
-    // return data->queue[data->front++]; 
+    fcfs_data_t *q = (fcfs_data_t*) sched->data;
+    // Only remove if it's the currently scheduled process (at the head)
+    // This is called when the process blocks itself (e.g., semWait)
+    if (q->head < q->tail && q->queue[q->head-1] == proc) {
+         // Effectively, the 'next' call already advanced head, so we don't need to do much here.
+         // If 'next' hadn't been called yet, we'd do q->head++.
+    }
 }
 
 Scheduler* create_fcfs_scheduler() {
