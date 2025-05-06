@@ -65,7 +65,7 @@ static pcb_t* mlfq_next(Scheduler* sched) {
     // Check if any process is currently running
     for (int i = 0; i < NUM_QUEUES; ++i) {
         mlfq_queue_t* q = &data->levels[i];
-        if(q->current && q->current->state != TERMINATED) {
+        if(q->current && q->current->state == RUNNING) {
             // If current process is still running, return it
             return q->current;
         }
@@ -85,8 +85,11 @@ static pcb_t* mlfq_next(Scheduler* sched) {
 static void mlfq_preempt(Scheduler* sched, pcb_t* proc) {
     mlfq_data_t* data = (mlfq_data_t*) sched->data;
     int level = proc->priority;
-    if (level < 0 || level >= NUM_QUEUES) level = NUM_QUEUES - 1;
-    
+    if (level < 0 || level >= NUM_QUEUES) {
+        level = NUM_QUEUES - 1;
+        proc->priority = level;
+        update_pcb_in_memory(proc); // Update PCB in memory
+    }
     mlfq_queue_t* q = &data->levels[level];
 
     q->ticks_used++;
@@ -119,7 +122,15 @@ static void dequeue_mlfq(Scheduler* sched, pcb_t* proc) {
     // for (int i = 0; i < NUM_QUEUES; ++i) {
     //     queue_remove(&data->levels[i], proc);
     // }
+    q->ticks_used++;
+    if(q->ticks_used >= q->quantum){
+        if (proc->priority < NUM_QUEUES - 1){
+            proc->priority++;
+            update_pcb_in_memory(proc); // Update PCB in memory
+        }
+       }
    q->current = NULL;
+   q->ticks_used = 0;
 }
 
 Scheduler* create_mlfq_scheduler() {

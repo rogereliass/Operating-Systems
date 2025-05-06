@@ -349,6 +349,7 @@ void simulation_step() {
 
     // Check if process finished
     if ( current->state == BLOCKED) {
+        clock_tick++;
         printf("Process %d is now BLOCKED.\n", current->pid);
         return;
         // memory free if needed
