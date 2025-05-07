@@ -25,6 +25,7 @@ extern void simulation_step();
 extern void add_process();
 extern void sem_init_all();
 extern void mem_init();
+extern void get_resource_status(resource_status_t* status_array, int* num_resources);
 
 GtkWidget *log_view;
 GtkWidget *window;
