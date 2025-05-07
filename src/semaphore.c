@@ -58,3 +58,31 @@ void sem_signal(char *name,Scheduler* scheduler) {
         sem->value++;
     }
 }
+
+void get_resource_status(resource_status_t* status_array, int* num_resources) {
+    *num_resources = sem_count;
+    
+    // For each semaphore in the system
+    for (int i = 0; i < sem_count; i++) {
+        semaphore_t* sem = &semaphores[i];
+        
+        // Copy basic information
+        strcpy(status_array[i].name, sem->name);
+        status_array[i].value = sem->value;
+        status_array[i].queue_size = sem->queue_size;
+        status_array[i].current_holder = (sem->value == 0) ? 1 : -1; // Simplified: if locked, assume PID 1 holds it
+        
+        // Get list of waiting PIDs
+        if (sem->queue_size > 0) {
+            status_array[i].waiting_pids = malloc(sem->queue_size * sizeof(int));
+            Node* current = sem->queue;
+            int j = 0;
+            while (current != NULL) {
+                status_array[i].waiting_pids[j++] = ((pcb_t*)current->data)->pid;
+                current = current->next;
+            }
+        } else {
+            status_array[i].waiting_pids = NULL;
+        }
+    }
+}

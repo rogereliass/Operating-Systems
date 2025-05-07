@@ -141,6 +141,45 @@ void on_exit_app(GtkButton *button, gpointer user_data) {
     gtk_main_quit();
 }
 
+void update_resource_panel(GtkWidget* panel) {
+    resource_status_t status[MAX_SEMAPHORES];  // Use the same MAX_SEMAPHORES constant
+    int num_resources;
+    
+    // Get current resource status
+    get_resource_status(status, &num_resources);
+    
+    // Update the GUI with the status information
+    for (int i = 0; i < num_resources; i++) {
+        // Update resource status (locked/free)
+        char status_text[256];
+        snprintf(status_text, sizeof(status_text), 
+                "%s: %s (Held by: %s)", 
+                status[i].name,
+                status[i].value ? "Free" : "Locked",
+                status[i].current_holder == -1 ? "None" : "PID " + status[i].current_holder);
+        
+        // Update waiting queue
+        char queue_text[256] = "Waiting: ";
+        if (status[i].queue_size > 0) {
+            for (int j = 0; j < status[i].queue_size; j++) {
+                char pid_str[16];
+                snprintf(pid_str, sizeof(pid_str), "PID %d ", status[i].waiting_pids[j]);
+                strcat(queue_text, pid_str);
+            }
+        } else {
+            strcat(queue_text, "None");
+        }
+        
+        // Update your GUI widgets here with status_text and queue_text
+        // ...
+        
+        // Free the waiting_pids array
+        if (status[i].waiting_pids) {
+            free(status[i].waiting_pids);
+        }
+    }
+}
+
 // Initialize GUI and return the window widget
 GtkWidget* init_gui(int argc, char *argv[]) {
     gtk_init(&argc, &argv);
