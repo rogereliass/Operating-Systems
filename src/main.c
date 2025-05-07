@@ -335,7 +335,8 @@ void load_program() {
 // }
 void simulation_step() {
     printf("\n--- Clock Tick: %d ---\n", clock_tick); // Debug print
-
+    // First check for new processes
+    load_program();
     current = scheduler->next(scheduler);
     if (!current) {
         // Check if there are any processes that are not terminated
@@ -429,6 +430,9 @@ void simulation_step() {
             update_pcb_in_memory(current); // Update state in memory
         }
         else {
+            // If not terminated or blocked, put back in ready state
+            current->state = READY;
+            update_pcb_in_memory(current);
             scheduler->preempt(scheduler, current); // If not terminated or blocked
         }
     }
