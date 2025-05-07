@@ -6,6 +6,8 @@
 #include "../include/fcfs_scheduler.h"
 #include "../include/round_robin_scheduler.h"
 #include "../include/mlfq_scheduler.h"
+#include "../include/gui.h"
+#include <gtk/gtk.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -183,6 +185,7 @@ void add_process() {
 
 void choose_scheduler() {
     //should be from gui
+    
     printf("Choose scheduler:\n1. FCFS\n2. RR\n3. MLFQ\nChoice: ");
     int choice, quantum;
     scanf("%d", &choice);
@@ -281,20 +284,35 @@ void load_program() {
 //     }
 // }
 void simulation_step() {
-    
     printf("\n--- Clock Tick: %d ---\n", clock_tick); // Debug print
+    
+    // First check for new processes
+    load_program();
 
     pcb_t* current = scheduler->next(scheduler);
     if (!current) {
-        printf("All processes finished.\n");
-        simulation_running = 0;
+        // Check if there are any processes that are not terminated
+        int has_active_processes = 0;
+        for (int i = 0; i < num_processes; i++) {
+            if (processes[i].state != TERMINATED) {
+                has_active_processes = 1;
+                break;
+            }
+        }
+        
+        if (!has_active_processes) {
+            printf("All processes finished.\n");
+            simulation_running = 0;
+        }
+        clock_tick++;  // Increment clock even when no process is running
         return;
     }
 
     // Check if the process selected by the scheduler is actually ready/running
     if (current->state == BLOCKED || current->state == TERMINATED) {
         printf("Scheduler returned non-runnable process %d (%s). Skipping tick.\n", current->pid, state_type_to_string(current->state));
-        return; // Should not happen with correct scheduler logic, but good safeguard
+        clock_tick++;  // Increment clock even when skipping
+        return;
     }
 
     current->state = RUNNING;
@@ -308,7 +326,8 @@ void simulation_step() {
         printf("Error: PC (%d) is outside valid code range [%d, %d) for PID %d. Terminating process.\n", current->pc, code_start_index, code_end_index, current->pid);
         current->state = TERMINATED;
         update_pcb_in_memory(current); // Update state in memory
-        return; // Skip instruction fetch/execute for this tick
+        clock_tick++;  // Increment clock even when process is terminated
+        return;
     }
     printf("Running process %d (Priority: %d, PC: %d, State: %s)\n", current->pid, current->priority, current->pc, state_type_to_string(current->state));
     // Fetch and execute one instruction
@@ -317,6 +336,7 @@ void simulation_step() {
         printf("Error: Failed to read instruction for PID %d at PC %d. Terminating process.\n", current->pid, current->pc);
         current->state = TERMINATED; // Mark process as terminated
         update_pcb_in_memory(current); // Update its status in memory
+        clock_tick++;  // Increment clock even when process is terminated
         return;
     }
     printf("  Fetching instruction at mem[%d]: %s", current->pc, instruction_string); // No newline in instruction string usually
@@ -329,7 +349,8 @@ void simulation_step() {
         printf("Error: Failed to parse instruction for PID %d at PC %d: '%s'. Terminating process.\n", current->pid, current->pc, instruction_copy);
         current->state = TERMINATED;
         update_pcb_in_memory(current);
-        return; // Stop processing this step
+        clock_tick++;  // Increment clock even when process is terminated
+        return;
     }
     // Dispatch based on instruction type
     switch (inst->type) {
@@ -348,87 +369,38 @@ void simulation_step() {
     update_pcb_in_memory(current); // Update PCB in memory
 
     // Check if process finished
-    if ( current->state == BLOCKED) {
-        clock_tick++;
+    if (current->state == BLOCKED) {
         printf("Process %d is now BLOCKED.\n", current->pid);
+        clock_tick++;  // Increment clock when process is blocked
         return;
-        // memory free if needed
     }
+    
     // --- Refined Termination Check ---
     int code_end = current->pcb_index; // PCB starts right after the last instruction index
-    if (current->pc >= code_end){
+    if (current->pc >= code_end) {
         current->state = TERMINATED;
         printf("Process %d finished execution (PC %d >= Code End %d).\n", current->pid, current->pc, code_end_index);
         update_pcb_in_memory(current); // Update state in memory
-    }
-    else {
+    } else {
+        // If not terminated or blocked, put back in ready state
+        current->state = READY;
+        update_pcb_in_memory(current);
         scheduler->preempt(scheduler, current); // If not terminated or blocked
     }
-    clock_tick++;
+    clock_tick++;  // Increment clock at the end of the step
 }
 
 
-int main() {
+int main(int argc, char *argv[]) {
     // Initialize subsystems
     mem_init();
     sem_init_all();
 
-    choose_scheduler();   // Choose FCFS / RR / MLFQ
-    // Load programs into PCBs and memory
-    while (num_processes<3){
-        add_process();
-    }
-    bool exit_program = false; // new flag to control when to leave the loop
+    // Initialize and run GUI
+    GtkWidget *window = init_gui(argc, argv);
+    run_gui();
 
-    while (!exit_program) {
-        // 1. Refresh GUI
-        //update_gui(); 
-
-        // 2. Check Simulation State
-        if (simulation_running) {
-            load_program();
-            simulation_step(); // one clock tick
-            // if (!auto_mode) simulation_running = false; // in step mode, stop after one step
-        }
-
-        // 3. Handle User Input
-        //int user_action = get_user_action(); // hypothetical function: returns Start/Step/Stop/Reset/Exit
-        // int user_action=scanf
-
-        // switch (user_action) {
-        //     case ACTION_START:
-        //         simulation_running = true;
-        //         auto_mode = true;
-        //         break;
-
-        //     case ACTION_STEP:
-        //         simulation_running = true;
-        //         auto_mode = false;
-        //         break;
-
-        //     case ACTION_STOP:
-        //         simulation_running = false;
-        //         break;
-
-        //     case ACTION_RESET:
-        //         // Cleanup and Reload Everything
-        //         scheduler->destroy(scheduler);
-        //         mem_init();
-        //         sem_init_all();
-        //         choose_scheduler();
-        //         load_programs();
-        //         clock_tick = 0;
-        //         simulation_running = false;
-        //         auto_mode = false;
-        //         break;
-
-        //     case ACTION_EXIT:
-        //         // Cleanup and Exit Program
-        //         scheduler->destroy(scheduler);
-        //         exit_program = true;
-        //         break;
-        // }
-    }
-
+    // Cleanup
+    if (scheduler) scheduler->destroy(scheduler);
     return 0;
 }
