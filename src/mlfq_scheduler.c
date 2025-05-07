@@ -57,16 +57,31 @@ static void mlfq_enqueue(Scheduler* sched, pcb_t* proc) {
         proc->priority = level;
         update_pcb_in_memory(proc); // Update PCB in memory
     }
+    proc->time_in_queue = 0; // Reset time in queue
+    update_pcb_in_memory(proc); // Update PCB in memory
     queue_push(&data->levels[level], proc);
 }
 
 static pcb_t* mlfq_next(Scheduler* sched) {
     mlfq_data_t* data = (mlfq_data_t*) sched->data;
+
+    for (int i = 0; i < NUM_QUEUES; ++i){
+        mlfq_queue_t* q = &data->levels[i];
+        if (!queue_empty(q)) {
+            for (int j = q->head; j < q->tail; j++) {
+                q->queue[j]->time_in_queue++;
+                update_pcb_in_memory(q->queue[j]); // Update PCB in memory
+            }
+        }
+    }
+    
     // Check if any process is currently running
     for (int i = 0; i < NUM_QUEUES; ++i) {
         mlfq_queue_t* q = &data->levels[i];
         if(q->current && q->current->state == RUNNING) {
             // If current process is still running, return it
+            q->current->time_in_queue = 0; // Reset time in queue for the running process
+            update_pcb_in_memory(q->current); // Update PCB in memory
             return q->current;
         }
     }
@@ -76,6 +91,8 @@ static pcb_t* mlfq_next(Scheduler* sched) {
         if (!queue_empty(q)) {
             q->current = queue_pop(q);
             q->ticks_used = 0;
+            q->current->time_in_queue = 0; // Reset time in queue for the running process
+            update_pcb_in_memory(q->current); // Update PCB in memory
             return q->current;
         }
     }
@@ -122,6 +139,8 @@ static void dequeue_mlfq(Scheduler* sched, pcb_t* proc) {
     // for (int i = 0; i < NUM_QUEUES; ++i) {
     //     queue_remove(&data->levels[i], proc);
     // }
+    proc->time_in_queue = 0; // Reset time in queue
+    update_pcb_in_memory(proc); // Update PCB in memory
     q->ticks_used++;
     if(q->ticks_used >= q->quantum){
         if (proc->priority < NUM_QUEUES - 1){
@@ -131,6 +150,35 @@ static void dequeue_mlfq(Scheduler* sched, pcb_t* proc) {
        }
    q->current = NULL;
    q->ticks_used = 0;
+}
+static pcb_t* queue_mlfq(Scheduler* sched) {
+    mlfq_data_t* data = (mlfq_data_t*) sched->data;
+    pcb_t* queue[3];
+    int j=0;
+    for (int i = 0; i < NUM_QUEUES; i++) {
+        if (!queue_empty(&data->levels[i])) {
+            queue[j++] = data->levels[i].queue[data->levels[i].head];
+        }
+    }
+    if (j == 0) return NULL;
+    return queue[0];
+}
+static int queue_size_mlfq(Scheduler* sched) {
+    mlfq_data_t* data = (mlfq_data_t*) sched->data;
+    int size = 0;
+    for (int i = 0; i < NUM_QUEUES; i++) {
+        size += data->levels[i].tail - data->levels[i].head;
+    }
+    return size;
+}
+static int queue_empty_mlfq(Scheduler* sched) {
+    mlfq_data_t* data = (mlfq_data_t*) sched->data;
+    for (int i = 0; i < NUM_QUEUES; i++) {
+        if (!queue_empty(&data->levels[i])) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 Scheduler* create_mlfq_scheduler() {
@@ -146,6 +194,9 @@ Scheduler* create_mlfq_scheduler() {
     sched->preempt = mlfq_preempt;
     sched->destroy = mlfq_destroy;
     sched->scheduler_dequeue = dequeue_mlfq;
+    sched->queue = queue_mlfq;
+    sched->queue_size = queue_size_mlfq;
+    sched->queue_empty = queue_empty_mlfq;
     sched->data    = data;
 
     return sched;

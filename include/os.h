@@ -40,6 +40,7 @@ typedef struct pcb{
     int       mem_low;    // lower memory index
     int       mem_high;   // upper memory index
     int       pcb_index;  // inicates when pcb starts in memory (constant value)
+    int       time_in_queue; // time spent in the queue  
     //instruction_t *code;  // pointer into loaded code array
 } pcb_t;
 

@@ -19,6 +19,10 @@ int num_processes = 0;
 int clock_tick = 0;
 int simulation_running = 1; // 0 = stopped, 1 = running
 int auto_mode = 0;           // 0 = step-by-step, 1 = auto-run
+pcb_t* ready_queue[3];
+pcb_t* blocked_queue[3];
+pcb_t* running_process = NULL;
+pcb_t* current = NULL; // Current process being executed
 
 // Function Prototypes
 //void load_programs();
@@ -27,6 +31,42 @@ void simulation_step();
 void add_process();
 void load_program();
 //void update_gui();
+
+void get_ready_queue () {
+    // This function should return the ready queue from the scheduler
+    if(!scheduler->queue_empty(scheduler)){
+        pcb_t* sourceArray = scheduler->queue(scheduler);
+        for(int i = 0; i<scheduler->queue_size(scheduler); i++){
+            if(i >= 3){
+                printf("Error: Ready queue size exceeds maximum limit.\n");
+                break;
+            }
+            ready_queue[i] = &sourceArray[i];
+        }
+    }
+}
+
+void get_blocked_queue () {
+    // This function should return the blocked queue from the scheduler
+    int j=0;
+    for (int i = 0; i < 3; i++) {
+        if (processes[i].state == BLOCKED ) {
+            blocked_queue[j++] = &processes[i];
+        }
+    }
+} 
+
+void get_running_process () {
+    // This function should return the running process from the scheduler
+    if(!current || current->state != RUNNING){
+        printf("Error: No running process.\n");
+        return;
+    }
+    else{
+        running_process = current;
+    }
+}
+
 
 void add_process() {
     if (num_processes >= 3) {
@@ -60,7 +100,7 @@ void add_process() {
 
     // 2. Calculate total size needed
     int num_vars = 3;
-    int pcb_fields_count = 8; // pid, state, prio, pc, low, high, pcb_idx, arrival_time
+    int pcb_fields_count = 9; // pid, state, prio, pc, low, high, pcb_idx, time_in_queue, arrival_time
     int total_size = num_vars + instruction_count + pcb_fields_count;
 
     int mem_start_index = mem_alloc(total_size);
@@ -97,6 +137,7 @@ void add_process() {
     processes[num_processes].mem_low = var_start;
     processes[num_processes].mem_high = var_start + total_size - 1; // End of variable section (Corrected)
     processes[num_processes].pcb_index = pcb_start;
+    processes[num_processes].time_in_queue = 0; // Initialize time in queue
 
     // 6. Write PCB and arrival time to memory
     current_idx = pcb_start; // Start writing PCB data
@@ -165,6 +206,15 @@ void add_process() {
     memset(str, 0, 32); // Clear the buffer
     snprintf(str, 32, "%d", processes[num_processes].pcb_index);
     mem_write(current_idx, "pcb_index", str);
+    current_idx++;
+
+    if (current_idx >= MAX_MEM_WORDS) {
+        printf("Memory overflow loading %s\n", filename);
+        exit(1);
+    }
+    memset(str, 0, 32); // Clear the buffer
+    snprintf(str, 32, "%d", processes[num_processes].time_in_queue);
+    mem_write(current_idx, "time_in_queue", str);
     current_idx++;
 
     if (current_idx >= MAX_MEM_WORDS) {
@@ -285,11 +335,8 @@ void load_program() {
 // }
 void simulation_step() {
     printf("\n--- Clock Tick: %d ---\n", clock_tick); // Debug print
-    
-    // First check for new processes
-    load_program();
 
-    pcb_t* current = scheduler->next(scheduler);
+    current = scheduler->next(scheduler);
     if (!current) {
         // Check if there are any processes that are not terminated
         int has_active_processes = 0;
@@ -369,25 +416,28 @@ void simulation_step() {
     update_pcb_in_memory(current); // Update PCB in memory
 
     // Check if process finished
-    if (current->state == BLOCKED) {
+    if ( current->state == BLOCKED) {
         printf("Process %d is now BLOCKED.\n", current->pid);
-        clock_tick++;  // Increment clock when process is blocked
-        return;
+        // memory free if needed
     }
-    
-    // --- Refined Termination Check ---
-    int code_end = current->pcb_index; // PCB starts right after the last instruction index
-    if (current->pc >= code_end) {
-        current->state = TERMINATED;
-        printf("Process %d finished execution (PC %d >= Code End %d).\n", current->pid, current->pc, code_end_index);
-        update_pcb_in_memory(current); // Update state in memory
-    } else {
-        // If not terminated or blocked, put back in ready state
-        current->state = READY;
-        update_pcb_in_memory(current);
-        scheduler->preempt(scheduler, current); // If not terminated or blocked
+    else{
+        // --- Refined Termination Check ---
+        int code_end = current->pcb_index; // PCB starts right after the last instruction index
+        if (current->pc >= code_end){
+            current->state = TERMINATED;
+            printf("Process %d finished execution (PC %d >= Code End %d).\n", current->pid, current->pc, code_end_index);
+            update_pcb_in_memory(current); // Update state in memory
+        }
+        else {
+            scheduler->preempt(scheduler, current); // If not terminated or blocked
+        }
     }
-    clock_tick++;  // Increment clock at the end of the step
+    clock_tick++;
+
+    // increment time for ready processes
+    get_ready_queue();
+    get_blocked_queue();
+    get_running_process();
 }
 
 

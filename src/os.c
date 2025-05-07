@@ -153,21 +153,19 @@ char * state_type_to_string(proc_state_t state) {
 void update_pcb_in_memory(pcb_t *proc) {
     int idx = proc->pcb_index;
     char str[32];
-    // snprintf(str, sizeof str, "%d", proc->pid);
-    // mem_write(idx, "pid", str);
+
     mem_write(idx + 1, "state", state_type_to_string(proc->state));
-    // memset(str, 0, sizeof str); // Clear the buffer
+
     snprintf(str, sizeof str, "%d", proc->priority);
     mem_write(idx + 2, "priority", str);
+
     memset(str, 0, sizeof str); // Clear the buffer
     snprintf(str, sizeof str, "%d", proc->pc);
     mem_write(idx + 3, "pc", str);
-    // memset(str, 0, sizeof str); // Clear the buffer
-    // snprintf(str, sizeof str, "%d", proc->mem_low);
-    // mem_write(idx + 4, "mem_low", str);
-    // memset(str, 0, sizeof str); // Clear the buffer
-    // snprintf(str, sizeof str, "%d", proc->mem_high);
-    // mem_write(idx + 5, "mem_high", str);
+
+    memset(str, 0, sizeof str); // Clear the buffer
+    snprintf(str, sizeof str, "%d", proc->time_in_queue);
+    mem_write(idx + 3, "time_in_queue", str);
 }
 
 // void exec_semWait(pcb_t *proc, instruction_t *inst, Scheduler* scheduler){
