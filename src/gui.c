@@ -918,7 +918,7 @@ GtkWidget* init_gui(int argc, char *argv[]) {
 
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(window), "Scheduler Simulation");
-    gtk_window_set_default_size(GTK_WINDOW(window), 1600, 1100);  // Increase window size
+    gtk_window_set_default_size(GTK_WINDOW(window), 1920, 1080);  // Set to 1920x1080 (Full HD)
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
     // Add CSS styling for memory cells and general GUI elements
@@ -1026,10 +1026,10 @@ GtkWidget* init_gui(int argc, char *argv[]) {
     gtk_container_add(GTK_CONTAINER(log_scroll), log_view);
     
     // Set initial position for the main paned divider (30% of height to top section)
-    gtk_paned_set_position(GTK_PANED(main_paned), 400);
+    gtk_paned_set_position(GTK_PANED(main_paned), 450);
     
     // Set position for bottom paned divider (60% to memory viewer, 40% to log)
-    gtk_paned_set_position(GTK_PANED(bottom_paned), 960);
+    gtk_paned_set_position(GTK_PANED(bottom_paned), 1150);
 
     // Create control buttons in a frame
     GtkWidget *button_frame = gtk_frame_new("Controls");
