@@ -118,7 +118,7 @@ Scheduler* create_rr_scheduler(int quantum) {
 
     rr->quantum = quantum;
     rr->head = rr->tail = 0;
-
+    s->type = SCHEDULER_RR;
     s->scheduler_enqueue = enqueue_rr;
     s->next    = next_rr;
     s->preempt = preempt_rr;

@@ -8,11 +8,18 @@
 // Max procs waiting on a resource
 #define MAX_BLOCKED_Q  10
 
+// Resource names
+#define RESOURCE_USER_INPUT  "userInput"
+#define RESOURCE_USER_OUTPUT "userOutput"
+#define RESOURCE_FILE       "file"
+
 typedef struct {
     char name[16];
     int value;             // 0 = locked, 1 = free
     Node* queue;
     int queue_size;
+    int initialized;       // Flag to indicate if semaphore is initialized
+    int current_holder;    // PID of process currently holding the resource (-1 if none)
 } semaphore_t;
 
 // Structure to hold resource status information for GUI

@@ -77,6 +77,7 @@ Scheduler* create_fcfs_scheduler() {
         return NULL;
     }
     
+    s->type = SCHEDULER_FCFS;
     s->scheduler_enqueue = enqueue_fcfs;
     s->next = next_fcfs;
     s->preempt = preempt_fcfs;

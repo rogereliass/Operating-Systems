@@ -3,6 +3,11 @@
 
 #include "os.h"
 
+// Scheduler type definitions
+#define SCHEDULER_FCFS 1
+#define SCHEDULER_RR   2
+#define SCHEDULER_MLFQ 3
+
 typedef struct Scheduler Scheduler;
 
 struct Scheduler {
@@ -17,6 +22,7 @@ struct Scheduler {
 
     // scheduler-specific data
     void *data;
+    int type;  // Type of scheduler (FCFS, RR, or MLFQ)
 };
 
 #endif // SCHEDULER_INTERFACE_H

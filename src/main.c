@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <ctype.h>
 
 // Global Variables
 Scheduler* scheduler = NULL;
@@ -31,10 +32,28 @@ void simulation_step();
 void add_process();
 void load_program();
 //void update_gui();
+int extractFirstInt( char *str) {
+    int num = 0;
+    int found = 0;
 
+    // Traverse the string
+    while (*str) {
+        if  (isdigit(*str)) {
+            num = num * 10 + (*str - '0');
+            found = 1;
+        } else if (found) {
+            // If an integer was found and we hit a non-digit, break
+            break;
+        }
+        str++;
+    }
+
+    // If no number was found, you can decide what to return (e.g., 0 or an error code)
+    return found ? num : -1; // Returns -1 if no integer was found
+}
 void get_ready_queue () {
     // This function should return the ready queue from the scheduler
-    if(!scheduler->queue_empty(scheduler)){
+    
         pcb_t* sourceArray = scheduler->queue(scheduler);
         for(int i = 0; i<scheduler->queue_size(scheduler); i++){
             if(i >= 3){
@@ -43,7 +62,7 @@ void get_ready_queue () {
             }
             ready_queue[i] = &sourceArray[i];
         }
-    }
+    
 }
 
 void get_blocked_queue () {
@@ -73,15 +92,23 @@ void add_process() {
         printf("Maximum number of processes reached.\n");
         return;
     }
-
+    
     char filename[MAX_LINE_LEN];
     int arrival_time;
-    
-    printf("Enter program filename (e.g., Program_1.txt): ");
-    scanf("%s", filename);
-    printf("Enter arrival time (clock cycles): ");
-    scanf("%d", &arrival_time);
-    while (getchar() != '\n'); // Consume trailing newline
+    printf("Adding process from %s at time %d\n", filename, arrival_time);
+    // Read from temporary file
+    FILE* temp_file = fopen("temp_input.txt", "r");
+    if (!temp_file) {
+        printf("Error: Could not read input file.\n");
+        return;
+    }
+
+    if (fscanf(temp_file, "%s\n%d", filename, &arrival_time) != 2) {
+        printf("Error: Invalid input format.\n");
+        fclose(temp_file);
+        return;
+    }
+    fclose(temp_file);
 
     FILE* f = fopen(filename, "r");
     if (!f) {
@@ -130,106 +157,65 @@ void add_process() {
     }
 
     // 5. Setup PCB structure
-    processes[num_processes].pid = num_processes + 1;
+    processes[num_processes].pid = extractFirstInt(filename); // Extract PID from filename
+    if (processes[num_processes].pid < 0) {
+        printf("Error: Invalid PID extracted from filename.\n");
+        fclose(f);
+        return;
+    }
     processes[num_processes].state = NEW;
     processes[num_processes].priority = 0;
     processes[num_processes].pc = code_mem_start;
     processes[num_processes].mem_low = var_start;
-    processes[num_processes].mem_high = var_start + total_size - 1; // End of variable section (Corrected)
+    processes[num_processes].mem_high = var_start + total_size - 1;
     processes[num_processes].pcb_index = pcb_start;
-    processes[num_processes].time_in_queue = 0; // Initialize time in queue
+    processes[num_processes].time_in_queue = 0;
 
     // 6. Write PCB and arrival time to memory
-    current_idx = pcb_start; // Start writing PCB data
+    current_idx = pcb_start;
     char *str = malloc(32);
     if (!str) {
         printf("Failed to allocate buffer for PCB writing.\n");
         exit(1);
     }
 
-    // --- Add checks BEFORE writing PCB data ---
-    if (current_idx >= MAX_MEM_WORDS) {
-        printf("Memory overflow loading %s\n", filename);
-        exit(1);
-    }
-    snprintf(str, 32, "%d", processes[num_processes].pid); // Use snprintf for safety
-    mem_write(current_idx, "pid", str);
-    current_idx++;
+    // Write PCB fields
+    snprintf(str, 32, "%d", processes[num_processes].pid);
+    mem_write(current_idx++, "pid", str);
 
-    if (current_idx >= MAX_MEM_WORDS) {
-        printf("Memory overflow loading %s\n", filename);
-        exit(1);
-    }
-    mem_write(current_idx, "state", state_type_to_string(processes[num_processes].state));
-    current_idx++;
+    mem_write(current_idx++, "state", state_type_to_string(processes[num_processes].state));
 
-    if (current_idx >= MAX_MEM_WORDS) {
-        printf("Memory overflow loading %s\n", filename);
-        exit(1);
-    }
-    memset(str, 0, 32); // Clear the buffer
+    memset(str, 0, 32);
     snprintf(str, 32, "%d", processes[num_processes].priority);
-    mem_write(current_idx, "priority", str);
-    current_idx++;
+    mem_write(current_idx++, "priority", str);
 
-    if (current_idx >= MAX_MEM_WORDS) {
-        printf("Memory overflow loading %s\n", filename);
-        exit(1);
-    }
-    memset(str, 0, 32); // Clear the buffer
+    memset(str, 0, 32);
     snprintf(str, 32, "%d", processes[num_processes].pc);
-    mem_write(current_idx, "pc", str);
-    current_idx++;
+    mem_write(current_idx++, "pc", str);
 
-    if (current_idx >= MAX_MEM_WORDS) {
-        printf("Memory overflow loading %s\n", filename);
-        exit(1);
-    }
-    memset(str, 0, 32); // Clear the buffer
+    memset(str, 0, 32);
     snprintf(str, 32, "%d", processes[num_processes].mem_low);
-    mem_write(current_idx, "mem_low", str); 
-    current_idx++;
+    mem_write(current_idx++, "mem_low", str);
 
-    if (current_idx >= MAX_MEM_WORDS) {
-        printf("Memory overflow loading %s\n", filename);
-        exit(1);
-    }
-    memset(str, 0, 32); // Clear the buffer
+    memset(str, 0, 32);
     snprintf(str, 32, "%d", processes[num_processes].mem_high);
-    mem_write(current_idx, "mem_high", str);
-    current_idx++;
+    mem_write(current_idx++, "mem_high", str);
 
-    if (current_idx >= MAX_MEM_WORDS) {
-        printf("Memory overflow loading %s\n", filename);
-        exit(1);
-    }
-    memset(str, 0, 32); // Clear the buffer
+    memset(str, 0, 32);
     snprintf(str, 32, "%d", processes[num_processes].pcb_index);
-    mem_write(current_idx, "pcb_index", str);
-    current_idx++;
+    mem_write(current_idx++, "pcb_index", str);
 
-    if (current_idx >= MAX_MEM_WORDS) {
-        printf("Memory overflow loading %s\n", filename);
-        exit(1);
-    }
-    memset(str, 0, 32); // Clear the buffer
+    memset(str, 0, 32);
     snprintf(str, 32, "%d", processes[num_processes].time_in_queue);
-    mem_write(current_idx, "time_in_queue", str);
-    current_idx++;
+    mem_write(current_idx++, "time_in_queue", str);
 
-    if (current_idx >= MAX_MEM_WORDS) {
-        printf("Memory overflow loading %s\n", filename);
-        exit(1);
-    }
-    // Store arrival time in memory
-    memset(str, 0, 32); // Clear the buffer
+    memset(str, 0, 32);
     snprintf(str, 32, "%d", arrival_time);
-    mem_write(current_idx, "arrival_time", str);
-    free(str); 
-    // --- End Refined Memory Allocation ---
+    mem_write(current_idx++, "arrival_time", str);
 
+    free(str);
     num_processes++;
-    fclose(f); // Already closed
+    fclose(f);
     printf("Process added successfully.\n");
 }
 
@@ -273,6 +259,9 @@ void load_program() {
                 processes[i].state = READY;
                 scheduler->scheduler_enqueue(scheduler, &processes[i]);
                 printf("Process %d arrived at time %d\n", processes[i].pid, clock_tick);
+                char buffer[256];
+                snprintf(buffer, sizeof(buffer), "Process %d arrived at time %d\n", processes[i].pid, clock_tick);
+                log_message(buffer);
             }
         }
     }
@@ -334,7 +323,11 @@ void load_program() {
 //     }
 // }
 void simulation_step() {
-    printf("\n--- Clock Tick: %d ---\n", clock_tick); // Debug print
+    char buffer[256];
+    snprintf(buffer, sizeof(buffer), "\n--- Clock Tick: %d ---\n", clock_tick);
+    printf("%s", buffer);
+    log_message(buffer);
+    
     // First check for new processes
     load_program();
     current = scheduler->next(scheduler);
@@ -350,6 +343,7 @@ void simulation_step() {
         
         if (!has_active_processes) {
             printf("All processes finished.\n");
+            log_message("All processes finished.\n");
             simulation_running = 0;
         }
         clock_tick++;  // Increment clock even when no process is running
@@ -358,7 +352,10 @@ void simulation_step() {
 
     // Check if the process selected by the scheduler is actually ready/running
     if (current->state == BLOCKED || current->state == TERMINATED) {
-        printf("Scheduler returned non-runnable process %d (%s). Skipping tick.\n", current->pid, state_type_to_string(current->state));
+        snprintf(buffer, sizeof(buffer), "Scheduler returned non-runnable process %d (%s). Skipping tick.\n", 
+                current->pid, state_type_to_string(current->state));
+        printf("%s", buffer);
+        log_message(buffer);
         clock_tick++;  // Increment clock even when skipping
         return;
     }
@@ -371,30 +368,48 @@ void simulation_step() {
     int code_start_index = current->mem_low + 3; 
     int code_end_index = current->pcb_index;     // Code ends strictly *before* PCB begins
     if (current->pc < code_start_index || current->pc >= code_end_index) {
-        printf("Error: PC (%d) is outside valid code range [%d, %d) for PID %d. Terminating process.\n", current->pc, code_start_index, code_end_index, current->pid);
+        snprintf(buffer, sizeof(buffer), "Error: PC (%d) is outside valid code range [%d, %d) for PID %d. Terminating process.\n", 
+                current->pc, code_start_index, code_end_index, current->pid);
+        printf("%s", buffer);
+        log_message(buffer);
         current->state = TERMINATED;
         update_pcb_in_memory(current); // Update state in memory
         clock_tick++;  // Increment clock even when process is terminated
         return;
     }
-    printf("Running process %d (Priority: %d, PC: %d, State: %s)\n", current->pid, current->priority, current->pc, state_type_to_string(current->state));
+    
+    snprintf(buffer, sizeof(buffer), "Running process %d (Priority: %d, PC: %d, State: %s)\n", 
+            current->pid, current->priority, current->pc, state_type_to_string(current->state));
+    printf("%s", buffer);
+    log_message(buffer);
+    
     // Fetch and execute one instruction
     char* instruction_string = mem_read(current->pc, current->pc, "instruction");
     if (!instruction_string) {
-        printf("Error: Failed to read instruction for PID %d at PC %d. Terminating process.\n", current->pid, current->pc);
+        snprintf(buffer, sizeof(buffer), "Error: Failed to read instruction for PID %d at PC %d. Terminating process.\n", 
+                current->pid, current->pc);
+        printf("%s", buffer);
+        log_message(buffer);
         current->state = TERMINATED; // Mark process as terminated
         update_pcb_in_memory(current); // Update its status in memory
         clock_tick++;  // Increment clock even when process is terminated
         return;
     }
-    printf("  Fetching instruction at mem[%d]: %s", current->pc, instruction_string); // No newline in instruction string usually
+    
+    snprintf(buffer, sizeof(buffer), "  Fetching instruction at mem[%d]: %s", current->pc, instruction_string);
+    printf("%s", buffer);
+    log_message(buffer);
+    
     char instruction_copy[MAX_LINE_LEN];
     strncpy(instruction_copy, instruction_string, sizeof(instruction_copy) - 1);
     instruction_copy[sizeof(instruction_copy) - 1] = '\0';
 
     instruction_t* inst = parse_program(instruction_copy);
     if (!inst) {
-        printf("Error: Failed to parse instruction for PID %d at PC %d: '%s'. Terminating process.\n", current->pid, current->pc, instruction_copy);
+        snprintf(buffer, sizeof(buffer), "Error: Failed to parse instruction for PID %d at PC %d: '%s'. Terminating process.\n", 
+                current->pid, current->pc, instruction_copy);
+        printf("%s", buffer);
+        log_message(buffer);
         current->state = TERMINATED;
         update_pcb_in_memory(current);
         clock_tick++;  // Increment clock even when process is terminated
@@ -417,31 +432,28 @@ void simulation_step() {
     update_pcb_in_memory(current); // Update PCB in memory
 
     // Check if process finished
-    if ( current->state == BLOCKED) {
-        printf("Process %d is now BLOCKED.\n", current->pid);
-        // memory free if needed
+    if (current->state == BLOCKED) {
+        snprintf(buffer, sizeof(buffer), "Process %d is now BLOCKED.\n", current->pid);
+        printf("%s", buffer);
+        log_message(buffer);
+        clock_tick++;
+        return;
     }
-    else{
-        // --- Refined Termination Check ---
-        int code_end = current->pcb_index; // PCB starts right after the last instruction index
-        if (current->pc >= code_end){
-            current->state = TERMINATED;
-            printf("Process %d finished execution (PC %d >= Code End %d).\n", current->pid, current->pc, code_end_index);
-            update_pcb_in_memory(current); // Update state in memory
-        }
-        else {
-            // If not terminated or blocked, put back in ready state
-            current->state = READY;
-            update_pcb_in_memory(current);
-            scheduler->preempt(scheduler, current); // If not terminated or blocked
-        }
+    
+    // Check for process termination
+    int code_end = current->pcb_index; // PCB starts right after the last instruction index
+    if (current->pc >= code_end) {
+        current->state = TERMINATED;
+        snprintf(buffer, sizeof(buffer), "Process %d finished execution (PC %d >= Code End %d).\n", 
+                current->pid, current->pc, code_end_index);
+        printf("%s", buffer);
+        log_message(buffer);
+        update_pcb_in_memory(current); // Update state in memory
+    } else {
+        scheduler->preempt(scheduler, current); // If not terminated or blocked
     }
+    
     clock_tick++;
-
-    // increment time for ready processes
-    get_ready_queue();
-    get_blocked_queue();
-    get_running_process();
 }
 
 

@@ -125,7 +125,10 @@ static void mlfq_preempt(Scheduler* sched, pcb_t* proc) {
     } else {
         // Let it continue
         q->current = proc;
+        // proc->state = READY;
+        // update_pcb_in_memory(proc); // Update PCB in memory
     }
+    
 }
 
 static void mlfq_destroy(Scheduler* sched) {
@@ -189,6 +192,7 @@ Scheduler* create_mlfq_scheduler() {
         queue_init(&data->levels[i], 1 << i); // quantum: 1, 2, 4, 8
     }
 
+    sched->type = SCHEDULER_MLFQ;
     sched->scheduler_enqueue = mlfq_enqueue;
     sched->next    = mlfq_next;
     sched->preempt = mlfq_preempt;

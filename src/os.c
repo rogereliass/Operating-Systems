@@ -1,73 +1,81 @@
 #include "../include/os.h"
+#include "../include/memory.h"
+#include "../include/semaphore.h"
+#include "../include/scheduler_interface.h"
+#include "../include/gui.h"
 // #include "../include/memory.h"
 // #include "../include/semaphore.h"
 // #include "../include/scheduler_interface.h"
 
+// External declaration of scheduler
+extern Scheduler* scheduler;
+
 void exec_print(pcb_t *proc, instruction_t *inst){
     char* print_val = mem_read(proc->mem_low, proc->mem_high, inst->arg1);
-    printf("%s",print_val);
+    if (print_val) {
+        // Create buffer for the log message with process ID prefix
+        char log_buffer[512];
+        snprintf(log_buffer, sizeof(log_buffer), "Process %d output: %s", proc->pid, print_val);
+        log_message(log_buffer);
+    } else {
+        // Log an error if the variable isn't found
+        char log_buffer[256];
+        snprintf(log_buffer, sizeof(log_buffer), "Process %d: Error - Variable '%s' not found for printing", 
+                 proc->pid, inst->arg1);
+        log_message(log_buffer);
+    }
 }
 
 void exec_assign(pcb_t *proc, instruction_t *inst){
     char value_buffer[100];
     if (strcmp(inst->arg2, "input") == 0) {
-        // Case 1: Input from user
-        printf("Please enter a value for process %d: ", proc->pid);
-        fflush(stdout); // <-- ADD THIS LINE
-        fgets(value_buffer, sizeof value_buffer, stdin);
-        value_buffer[strcspn(value_buffer, "\n")] = '\0';  // remove newline
+        // Case 1: Input from user using GUI
+        int input_value = get_program_input(proc->pid);
+        
+        // Check if text input was provided
+        if (is_program_text_input()) {
+            // Get the text input and copy it to the value buffer
+            const char* text_input = get_program_text_input();
+            strncpy(value_buffer, text_input, sizeof(value_buffer) - 1);
+            value_buffer[sizeof(value_buffer) - 1] = '\0';
+            
+            // Log the text input
+            char log_msg[256];
+            snprintf(log_msg, sizeof(log_msg), "Process %d received text input: %s", proc->pid, text_input);
+            log_message(log_msg);
+        } else {
+            // Handle numeric input
+            snprintf(value_buffer, sizeof(value_buffer), "%d", input_value);
+            
+            // Log the numeric input
+            char log_msg[256];
+            snprintf(log_msg, sizeof(log_msg), "Process %d received input: %d", proc->pid, input_value);
+            log_message(log_msg);
+        }
     }
     else if(strncmp(inst->arg2, "readFile", 8) == 0){
         // Case 2: Nested instruction: readFile a
-        // char *filename_var = strtok(inst->arg2 + 9, " \n");  // get the next token after "readFile"
         char filename_var[256];  // Allocate a buffer to hold the filename
         sscanf(inst->arg2 + 9, "%255s", filename_var);
 
         char *filename = mem_read(proc->mem_low, proc->mem_high, filename_var);
         if (!filename) {
-            printf("Error: Variable '%s' not found in memory.\n", filename_var);
+            char log_msg[256];
+            // Limit the variable name length to prevent buffer overflow
+            snprintf(log_msg, sizeof(log_msg), "Error: Variable '%.100s' not found in memory.", filename_var);
+            log_message(log_msg);
             return;
         }
-        printf("Reading file %s\n", filename);
-
-        FILE *file = fopen(filename, "r");
-        if (!file) {
-            printf("Error: Could not open file '%s'\n", filename);
-            return;
-        }
-        printf("File opened successfully\n");
-
-        // Read file content
-        fseek(file, 0, SEEK_END);
-        long size = ftell(file);
-        // --- START OF CHANGES ---
-        if (size < 0) { // Add error checking for ftell
-            perror("Error getting file size");
-            fclose(file);
-            // Maybe set value_buffer to an error string or return?
-            // For now, let's make it empty.
-            value_buffer[0] = '\0';
-            // Skip the rest of the file reading logic
+        
+        // Use GUI to read file content
+        char* file_content = get_file_content(filename);
+        if (file_content[0] != '\0') {
+            strncpy(value_buffer, file_content, sizeof(value_buffer) - 1);
+            value_buffer[sizeof(value_buffer) - 1] = '\0';
         } else {
-            rewind(file);
-            // Calculate how many bytes we can actually read safely
-            size_t buffer_capacity = sizeof(value_buffer) - 1;
-            size_t bytes_to_read = (size < buffer_capacity) ? (size_t)size : buffer_capacity;
-
-            // Read only that many bytes
-            size_t bytes_read = fread(value_buffer, 1, bytes_to_read, file);
-
-            // Null-terminate the buffer *after* the bytes actually read
-            value_buffer[bytes_read] = '\0';
-
-            // Optional: Check if fread encountered an error
-            if (bytes_read != bytes_to_read && ferror(file)) {
-                perror("Error reading file content");
-            }
-             printf("File content read successfully (%zu bytes)\n", bytes_read);
+            // If file is empty or couldn't be read, set to empty string
+            value_buffer[0] = '\0';
         }
-        // --- END OF CHANGES ---
-        fclose(file);
     }
     else {
         // Case 3: Direct value (e.g., number, string, another var)
@@ -82,38 +90,90 @@ void exec_assign(pcb_t *proc, instruction_t *inst){
     // Store the final result in memory as variable `x`
     for (int i = proc->mem_low; i <= proc->mem_low+2; i++) {
         if (memory_pool[i].name[0] == '\0' || strcmp(memory_pool[i].name, inst->arg1) == 0) {
-            printf("Assigning %s to %s\n", value_buffer, inst->arg1);
+            char log_msg[256];
+            snprintf(log_msg, sizeof(log_msg), "Assigning %s to %s", value_buffer, inst->arg1);
+            log_message(log_msg);
             mem_write(i, inst->arg1, value_buffer);
             return;
         }
     }
-    printf("Error: No space to assign variable '%s'\n", inst->arg1);
+    
+    char log_msg[256];
+    snprintf(log_msg, sizeof(log_msg), "Error: No space to assign variable '%s'", inst->arg1);
+    log_message(log_msg);
 }
 
 void exec_write_file(pcb_t *proc, instruction_t *inst) {
+    // Wait for file resource
+    sem_wait(RESOURCE_FILE, proc, scheduler);
+    
     char* file_name = mem_read(proc->mem_low, proc->mem_high, inst->arg1);
-    FILE *file = fopen(file_name, "w");
-    if (!file) {
-        printf("Error: could not open file %s\n", inst->arg1);
+    if (!file_name) {
+        log_message("Error: File name variable not found in memory");
+        sem_signal(RESOURCE_FILE, scheduler);
         return;
     }
+    
     char* write_val = mem_read(proc->mem_low, proc->mem_high, inst->arg2);
-    fprintf(file, "%s", write_val);
-    printf("Writing %s to %s\n", inst->arg2, inst->arg1);
-    fclose(file);
+    if (!write_val) {
+        log_message("Error: Content variable not found in memory");
+        sem_signal(RESOURCE_FILE, scheduler);
+        return;
+    }
+    
+    // Use GUI to write file
+    int success = write_file_content(file_name, write_val);
+    
+    if (!success) {
+        char buffer[256];
+        snprintf(buffer, sizeof(buffer), "Process %d failed to write to file %s", proc->pid, file_name);
+        log_message(buffer);
+    } else {
+        char buffer[256];
+        snprintf(buffer, sizeof(buffer), "Process %d wrote to file %s", proc->pid, file_name);
+        log_message(buffer);
+    }
+    
+    // Release file resource
+    sem_signal(RESOURCE_FILE, scheduler);
 }
 
 void exec_read_file(pcb_t *proc, instruction_t *inst) {
-    FILE *file = fopen(inst->arg1, "r");
-    if (!file) {
-        printf("Error: could not open file %s\n", inst->arg1);
-        return;
+    // Wait for file resource
+    sem_wait(RESOURCE_FILE, proc, scheduler);
+    
+    // Get file content through GUI
+    char* content = get_file_content(inst->arg1);
+    
+    if (content[0] != '\0') { // If content was successfully read
+        // Find a free memory location to store the file content
+        int stored = 0;
+        for (int i = proc->mem_low; i <= proc->mem_high; i++) {
+            if (memory_pool[i].name[0] == '\0') {
+                // Store file content in a variable named "fileContent"
+                mem_write(i, "fileContent", content);
+                stored = 1;
+                
+                char buffer[256];
+                snprintf(buffer, sizeof(buffer), "Process %d read file %s into memory", proc->pid, inst->arg1);
+                log_message(buffer);
+                break;
+            }
+        }
+        
+        if (!stored) {
+            char buffer[256];
+            snprintf(buffer, sizeof(buffer), "Process %d: No memory available to store file content", proc->pid);
+            log_message(buffer);
+        }
+    } else {
+        char buffer[256];
+        snprintf(buffer, sizeof(buffer), "Process %d failed to read file %s", proc->pid, inst->arg1);
+        log_message(buffer);
     }
-    printf("File opened successfully\n");
-    char buffer[100];
-    fgets(buffer, sizeof(buffer), file);
-    printf("Read %s from %s\n", buffer, inst->arg1);
-    fclose(file);
+    
+    // Release file resource
+    sem_signal(RESOURCE_FILE, scheduler);
 }
 void exec_print_from_to(pcb_t *proc, instruction_t *inst){
     char *val1 = mem_read(proc->mem_low, proc->mem_high, inst->arg1);
@@ -121,19 +181,31 @@ void exec_print_from_to(pcb_t *proc, instruction_t *inst){
     // If val1 or val2 aren't found, assume direct numbers
     int from = val1 ? atoi(val1) : atoi(inst->arg1);
     int to   = val2 ? atoi(val2) : atoi(inst->arg2);
-    printf("Printing from %d to %d\n", from, to);
+    
+    // Log the range
+    char range_msg[256];
+    snprintf(range_msg, sizeof(range_msg), "Process %d printing from %d to %d:", proc->pid, from, to);
+    log_message(range_msg);
+    
+    // Generate the sequence
+    char sequence[1024] = "";
+    char temp[16];
+    int i;
+    
     if (from > to) {
-        for (int i = from; i >= to; i--) {
-            printf("%d ", i);
+        for (i = from; i >= to; i--) {
+            snprintf(temp, sizeof(temp), "%d ", i);
+            strncat(sequence, temp, sizeof(sequence) - strlen(sequence) - 1);
+        }
+    } else {
+        for (i = from; i <= to; i++) {
+            snprintf(temp, sizeof(temp), "%d ", i);
+            strncat(sequence, temp, sizeof(sequence) - strlen(sequence) - 1);
         }
     }
-    else {
-        for (int i = from; i <= to; i++) {
-            printf("%d ", i);
-        }
-    }
-    printf("\n");
-
+    
+    // Log the sequence
+    log_message(sequence);
 }
 
 char * state_type_to_string(proc_state_t state) {
@@ -165,7 +237,7 @@ void update_pcb_in_memory(pcb_t *proc) {
 
     memset(str, 0, sizeof str); // Clear the buffer
     snprintf(str, sizeof str, "%d", proc->time_in_queue);
-    mem_write(idx + 3, "time_in_queue", str);
+    mem_write(idx + 7, "time_in_queue", str);
 }
 
 // void exec_semWait(pcb_t *proc, instruction_t *inst, Scheduler* scheduler){
